@@ -1,0 +1,52 @@
+POST http://localhost:4000/users/signup
+Content-Type: application/json
+
+{
+    "email":"walterWhite@gmail.com","password":"crystalBlue123"
+}
+###
+GET http://localhost:4000/stocks/AAPL
+Content-Type: application/json
+
+{
+    "ticker":"AAPL"
+}
+###
+GET https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=AAPL&apikey=681d260bf43948c09aa6284b`;
+Content-Type: application/json
+
+### GET stock
+GET http://localhost:4000/stocks/AAPL
+Content-Type: application/json
+
+{
+    "ticker":"AAPL"
+}
+### GET all stock
+GET http://localhost:4000/stocks/
+Content-Type: application/json
+
+
+### GET stock
+GET https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=TSLA&apikey=SMPICQ6GQ5HO959X
+Content-Type: application/json
+
+
+### GETS existing user
+POST http://localhost:4000/users/login
+Content-Type: application/json
+
+{
+    "email":"walterWhite@gmail.com","password":"crystalBlue123"
+}
+
+### create Comment
+POST http://localhost:4000/comments/create
+Content-Type: application/json
+
+{
+    "ticker":"AAPL", "username":"1", "comment":"example comment"
+}
+### get Comments
+GET http://localhost:4000/comments/AAPL
+Content-Type: application/json

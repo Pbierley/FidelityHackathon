@@ -1,0 +1,12 @@
+For this application you will need the env File which is not in the public repo. There are also several packages used such as chart js, jwt, nodemon, axios, express and some others I may not remember.
+To run this file open your terminal and change paths to this workspace.
+Youll then need to do node server.js. That will start up the back end.
+Then after that you will want to have liveserver installed and click run.
+That will allow you to be able to view the webpage.
+From there you are able to sign up or log in and view the stocks and other peoples comments.
+You are also capable of adding new stocks to the data base by clicking Get Price With a Ticker Inserted in the "Enter Stock Ticker" text box.
+Any new stock will fetch data from polygon and alphavantage to get information about the stock and also trading data.
+Once your done using the application you are able to log out and all cookies on both the front end and the jwt cookie stored on the backend will be cleared.
+
+
+I also worked alone and contributed all of the code.
