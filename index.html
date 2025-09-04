@@ -267,7 +267,7 @@
     <script src="../chart.js" defer></script>
     <script>
       const url = "http://localhost:4000"; // make sure this matched env
-      const POLYGON_API_KEY = "ujZYW74TVWrNPncWiPEsHNnjHFrqELwb";
+      const POLYGON_API_KEY = process.env.POLYGON_API_KEY;
       const LoginButton = document.getElementById("LoginButton");
       const SignupButton = document.getElementById("SignupButton");
       const LogoutButton = document.getElementById("logoutButton");
