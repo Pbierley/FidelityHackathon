@@ -16,6 +16,10 @@
         height: 100%;
         margin: 0;
       }
+      /* Add somewhere in <style> */
+      .card canvas { width: 100%; height: 420px; 
+      }
+
       body {
         background: url("../StockTracker.png") no-repeat center center fixed;
         background-size: contain;
@@ -254,18 +258,21 @@
       integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
       crossorigin="anonymous"
     ></script>
-    <!-- Chart.js core library -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- Chart.js Financial Plugin -->
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@3.3.0/dist/chartjs-chart-financial.min.js"></script>
+    <!-- Core Chart.js (UMD) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 
-    <!-- Chart.js date adapter (for timeseries axis) -->
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <!-- Time adapter -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 
-    <!-- Your custom chart logic -->
-    <script src="../chart.js" defer></script>
+    <!-- Financial plugin (v0.2.1 — correct!) -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.2.1/dist/chartjs-chart-financial.min.js"></script>
+
+    <!-- Your file that defines window.showChart -->
+    <script src="../chart.js"></script>
+
     <script>
+
       const url = "http://localhost:4000"; // make sure this matched env
       const POLYGON_API_KEY = process.env.POLYGON_API_KEY;
       const LoginButton = document.getElementById("LoginButton");
@@ -416,6 +423,7 @@
         stockContainer.appendChild(cardDiv);
 
         // Show chart after DOM element is added
+        console.log('calling showChart', stock.ticker, 'bars:', stock.tradingData && Object.keys(stock.tradingData).length);
         showChart(stock.ticker, stock.tradingData);
       }
 
@@ -841,5 +849,6 @@
         return result;
       }
     </script>
+
   </body>
 </html>
