@@ -17,14 +17,21 @@ async function fetchPolygonStockMeta(ticker) {
   };
 }
 
-// Utility: Fetch stock trading data from AlphaVantage
-async function fetchAlphaVantageQuote(ticker) {
-  const ApiKey = process.env.A_KEY;
-  console.log("api key -", ApiKey);
-  const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${ticker}&apikey=${ApiKey}`;
+
+async function fetchPolygonQuote(ticker){
+  const apiKey = process.env.POLYGON_API_KEY;
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0'); // months are 0-based
+    const day = String(today.getDate()).padStart(2, '0');
+    const formattedDate = `${year}-${month}-${day}`;
+    const pastDate = `${year - 1}-${month}-${day}`
+  //  console.log("formatted date ", formattedDate," past date ", pastDate)
+  //                                                                    v this could be changed to have the time type passed in
+  const url = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${pastDate}/${formattedDate}?adjusted=true&sort=asc&limit=120&apiKey=${apiKey}`;
   const response = await axios.get(url);
-  console.log("fetchAlphaVantageQuote response", response);
-  return response.data["Time Series (Daily)"];
+  //  console.log("Polygon response.data", response.data.results);
+  return response.data.results;
 }
 
 // GET /api/stocks — return all stock entries from DB
@@ -74,10 +81,11 @@ const getStock = async (req, res) => {
       }
     }
 
-    // Optionally update with AlphaVantage trading data
+    // Optionally update with polygon trading data
     try {
-      const tradingData = await fetchAlphaVantageQuote(upperTicker);
-      console.log("tradingData from alphaVantage", tradingData);
+        //  const tradingData = await fetchAlphaVantageQuote(upperTicker);
+        const tradingData = await fetchPolygonQuote(upperTicker);
+      //  console.log("tradingData from polygon", tradingData);
       //  check to prevent null from alphaVantage
       if (tradingData !== null || tradingData == !undefined) {
         await stocks.updateOne(

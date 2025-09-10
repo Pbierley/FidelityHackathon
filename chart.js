@@ -32,17 +32,31 @@ function showChart(ticker, tradingData) {
   }
 
   // Expect:
-  // { 'YYYY-MM-DD': { '1. open': '...', '2. high':'...', '3. low':'...', '4. close':'...' }, ... }
-  const entries = Object.entries(tradingData)
-    .filter(([k]) => /^\d{4}-\d{2}-\d{2}$/.test(k))
-    .sort(([a],[b]) => new Date(a) - new Date(b));
-
-  const candles = entries.map(([date, d]) => ({
-    x: new Date(date).getTime(),                    // <-- numeric timestamp (ms)
-    o: parseFloat(d['1. open']),
-    h: parseFloat(d['2. high']),
-    l: parseFloat(d['3. low']),
-    c: parseFloat(d['4. close']),
+  // tradingData {
+  //  0: {
+  // v :20753778        trading volume
+  // vw : 193.7755      volume Weighted average price 
+  // o : 195.42         open price
+  // c : 193.17         close price
+  // h : 197.62         highest price
+  // l : 191.6          lowest price
+  // t : 1736485200000  time in unix
+  // n : 236744         # of transactions
+  //    }
+  //  }
+  function formatDate (unixTime) {
+    const date = new Date(unixTime);  // ms → Date object
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0'); // months are 0-based
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+  const candles = tradingData.map((d) => ({
+    x: new Date(formatDate(d.t)).getTime(),                    // <-- numeric timestamp (ms)
+    o: d.o,
+    h: d.h,
+    l: d.l,
+    c: d.c,
   }));
 
   //  just some quick guardrails/logging ya heard
