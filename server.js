@@ -7,7 +7,7 @@ require("dotenv").config();
 app.use(express.json());
 app.use(
   cors({
-    origin: process.env.LOCAL_URL,
+    origin: "http://localhost:5173",
     credentials: true,
   })
 );
@@ -26,4 +26,4 @@ app.use("/stocks", stocksRouter);
 app.use("/users", usersRouter);
 app.use("/comments", commentsRouter);
 
-app.listen(process.env.PORT);
+app.listen(4000);

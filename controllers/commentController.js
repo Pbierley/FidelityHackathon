@@ -1,7 +1,7 @@
 const { connectToDB } = require("../db/mongoClient");
 const { MongoClient, ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
-const secretKey = process.env.JSON_WEB_KEY;
+const secretKey = process.env.VITE_JSON_WEB_KEY;
 
 const createComment = async (req, res) => {
   const { ticker, username, comment } = req.body;
