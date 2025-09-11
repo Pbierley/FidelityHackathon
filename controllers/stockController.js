@@ -3,7 +3,7 @@ const axios = require("axios");
 
 // Utility: Fetch stock metadata from Polygon
 async function fetchPolygonStockMeta(ticker) {
-  const apiKey = process.env.POLYGON_API_KEY;
+  const apiKey = process.env.VITE_POLYGON_API_KEY;
   const url = `https://api.polygon.io/v3/reference/tickers/${ticker}?apiKey=${apiKey}`;
   const response = await axios.get(url);
   const { results } = response.data;
@@ -19,13 +19,13 @@ async function fetchPolygonStockMeta(ticker) {
 
 
 async function fetchPolygonQuote(ticker){
-  const apiKey = process.env.POLYGON_API_KEY;
+  const apiKey = process.env.VITE_POLYGON_API_KEY;
     const today = new Date();
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0'); // months are 0-based
     const day = String(today.getDate()).padStart(2, '0');
     const formattedDate = `${year}-${month}-${day}`;
-    const pastDate = `${year - 1}-${month}-${day}`
+    const pastDate = `2025-01-01`
   //  console.log("formatted date ", formattedDate," past date ", pastDate)
   //                                                                    v this could be changed to have the time type passed in
   const url = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${pastDate}/${formattedDate}?adjusted=true&sort=asc&limit=120&apiKey=${apiKey}`;
@@ -70,6 +70,7 @@ const getStock = async (req, res) => {
       );
       try {
         const newStock = await fetchPolygonStockMeta(upperTicker);
+        console.log('new stock ', newStock);
         const result = await stocks.insertOne(newStock);
         console.log(`Inserted ${upperTicker} with _id: ${result.insertedId}`);
         existing = newStock;
@@ -96,7 +97,7 @@ const getStock = async (req, res) => {
         existing.tradingData = tradingData;
       }
     } catch (err) {
-      console.warn("AlphaVantage fetch failed (non-blocking):", err.message);
+      console.warn("Polygon trading data fetch failed (non-blocking):", err.message);
     }
 
     return res.status(200).json(existing);
