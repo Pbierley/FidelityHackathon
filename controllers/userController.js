@@ -1,7 +1,10 @@
 const { connectToDB } = require("../db/mongoClient"); // or wherever your DB code is
 const jwt = require("jsonwebtoken");
-const secretKey = process.env.JSON_WEB_KEY;
+const secretKey = process.env.VITE_JSON_WEB_KEY;
+console.log('secretKey', secretKey);
+const bcrypt = require("bcrypt");
 
+//TODO encrpyt-decrypt
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -9,17 +12,25 @@ const loginUser = async (req, res) => {
     const db = await connectToDB();
     const users = db.collection("users");
     //  insure that the password match
-    const user = await users.findOne({ email, password }); // directly in query
+    //updated because it won't work with hashed passwords
+    const user = await users.findOne({ email }); // directly in query
     console.log("user - ", user);
 
     if (!user) {
       return res.status(401).json({ error: "Invalid email or password." });
     }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if(!isMatch) {
+      return res.status(401).json({ error: "Invalid email or password." })
+    }
     const username = user.username;
     console.log("user backend result - ", user);
+    
+    //changed: don't include password into token
     const token = jwt.sign(
-      { email, username, password },
-      process.env.JSON_WEB_KEY,
+      { email, username },
+      secretKey,
       {
         expiresIn: "1h",
       }
@@ -33,7 +44,9 @@ const loginUser = async (req, res) => {
     res.cookie("username", user.username, {
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
-    res.json(user);
+    //changed: "res.json(user);", user contains the password, so we use a safe user instead
+    const { password: _, ...safeUser } = user;
+    res.json(safeUser)
   } catch (error) {
     console.error("Error fetching user: ", error);
     res.status(500).json({ error: "Failed to retrieve user data." });
@@ -60,14 +73,17 @@ const clearCookies = async (req, res) => {
     return res.status(500).json({ error: "Failed to clear cookies." });
   }
 };
+
+//encrypt decrypt
 const signupUser = async (req, res) => {
+  console.log("Step 1: recieved request", req.body);
+
   const { email, username, password } = req.body;
   console.log(req.body);
   const token = jwt.sign(
     {
       email,
       username,
-      password,
     },
     secretKey,
     { expiresIn: "1h" }
@@ -76,6 +92,7 @@ const signupUser = async (req, res) => {
   console.log(token);
 
   if (!email || !password || !username) {
+    console.log("Step 2: missing fields");
     return res
       .status(400)
       .json({ error: "Email, Username and password required" });
@@ -85,8 +102,12 @@ const signupUser = async (req, res) => {
     return res.status(400).json({ error: "Enter a valid email" });
   }
   try {
+    console.log("Step 3: connecting to DB...");
     const db = await connectToDB();
+    console.log("Step 4: connected to DB");
+
     const users = db.collection("users");
+
     const emailExisting = await users.findOne({ email });
     const usernameExisting = await users.findOne({ username });
     if (emailExisting) {
@@ -95,7 +116,29 @@ const signupUser = async (req, res) => {
     if (usernameExisting) {
       return res.status(409).json({ error: "email already exists" });
     }
-    const result = await users.insertOne({ email, username, password });
+
+    
+    //replaced "const result = await users.insertOne({ email, username, password });"
+
+    //hash the password
+    console.log("Step 6: hashing password...");
+    saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    //save user with hashed password
+    console.log("Step 7: inserting user...");
+    const result = await users.insertOne({email, username, password: hashedPassword});
+
+    console.log("Step 8: creating JWT...");
+    const token = jwt.sign(
+    {
+      email,
+      username
+    },
+    secretKey,
+    { expiresIn: "1h" }
+  );
+
     res.cookie("token", token, {
       httpOnly: true,
       sameSite: "Lax", // or 'None' if cross-origin with HTTPS

@@ -19,8 +19,6 @@ SignupSubmit.addEventListener("click", () => { Signup() });
 cancelLogin.addEventListener("click", () => { hideLogin() });
 cancelSignup.addEventListener("click", () => { hideSignup() });
 
-
-
 function fetchAllStocks() {
   fetch(`${url}/stocks/all`, {
     method: "GET",

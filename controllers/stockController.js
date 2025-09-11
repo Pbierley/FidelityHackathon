@@ -3,7 +3,7 @@ const axios = require("axios");
 
 // Utility: Fetch stock metadata from Polygon
 async function fetchPolygonStockMeta(ticker) {
-  const apiKey = process.env.POLYGON_API_KEY;
+  const apiKey = process.env.VITE_POLYGON_API_KEY;
   const url = `https://api.polygon.io/v3/reference/tickers/${ticker}?apiKey=${apiKey}`;
   const response = await axios.get(url);
   const { results } = response.data;
@@ -17,14 +17,21 @@ async function fetchPolygonStockMeta(ticker) {
   };
 }
 
-// Utility: Fetch stock trading data from AlphaVantage
-async function fetchAlphaVantageQuote(ticker) {
-  const ApiKey = process.env.A_KEY;
-  console.log("api key -", ApiKey);
-  const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${ticker}&apikey=${ApiKey}`;
+
+async function fetchPolygonQuote(ticker){
+  const apiKey = process.env.VITE_POLYGON_API_KEY;
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0'); // months are 0-based
+    const day = String(today.getDate()).padStart(2, '0');
+    const formattedDate = `${year}-${month}-${day}`;
+    const pastDate = `2025-01-01`
+  //  console.log("formatted date ", formattedDate," past date ", pastDate)
+  //                                                                    v this could be changed to have the time type passed in
+  const url = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${pastDate}/${formattedDate}?adjusted=true&sort=asc&limit=120&apiKey=${apiKey}`;
   const response = await axios.get(url);
-  console.log("fetchAlphaVantageQuote response", response);
-  return response.data["Time Series (Daily)"];
+  //  console.log("Polygon response.data", response.data.results);
+  return response.data.results;
 }
 
 // GET /api/stocks — return all stock entries from DB
@@ -63,6 +70,7 @@ const getStock = async (req, res) => {
       );
       try {
         const newStock = await fetchPolygonStockMeta(upperTicker);
+        console.log('new stock ', newStock);
         const result = await stocks.insertOne(newStock);
         console.log(`Inserted ${upperTicker} with _id: ${result.insertedId}`);
         existing = newStock;
@@ -74,10 +82,11 @@ const getStock = async (req, res) => {
       }
     }
 
-    // Optionally update with AlphaVantage trading data
+    // Optionally update with polygon trading data
     try {
-      const tradingData = await fetchAlphaVantageQuote(upperTicker);
-      console.log("tradingData from alphaVantage", tradingData);
+        //  const tradingData = await fetchAlphaVantageQuote(upperTicker);
+        const tradingData = await fetchPolygonQuote(upperTicker);
+      //  console.log("tradingData from polygon", tradingData);
       //  check to prevent null from alphaVantage
       if (tradingData !== null || tradingData == !undefined) {
         await stocks.updateOne(
@@ -88,7 +97,7 @@ const getStock = async (req, res) => {
         existing.tradingData = tradingData;
       }
     } catch (err) {
-      console.warn("AlphaVantage fetch failed (non-blocking):", err.message);
+      console.warn("Polygon trading data fetch failed (non-blocking):", err.message);
     }
 
     return res.status(200).json(existing);

@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const webkey = process.env.JSON_WEB_KEY;
+const webkey = process.env.VITE_JSON_WEB_KEY;
 
 const authToken = (req, res, next) => {
   console.log("webkey", webkey);
