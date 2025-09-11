@@ -7,13 +7,18 @@ const LogoutButton = document.getElementById("logoutButton");
 const getPriceButton = document.getElementById("getPriceButton");
 const LoginSubmit = document.getElementById("LoginSubmit");
 const SignupSubmit = document.getElementById("SignupSubmit");
+const cancelLogin = document.getElementById("cancelLogin");
+const cancelSignup = document.getElementById("cancelSignup");
 
-LoginButton.addEventListener("click", () => { hideLogin() });
+LoginButton.addEventListener("click", () => { hideLogin(), hideSignup() });
 SignupButton.addEventListener("click", () => { hideLogin() });
 getPriceButton.addEventListener("click", () => { fetchStock() });
 LogoutButton.addEventListener("click", () => { logout() });
 LoginSubmit.addEventListener("click", () => { Login() });
 SignupSubmit.addEventListener("click", () => { Signup() });
+cancelLogin.addEventListener("click", () => { hideLogin() });
+cancelSignup.addEventListener("click", () => { hideSignup() });
+
 
 
 function fetchAllStocks() {
