@@ -1,6 +1,7 @@
 const { connectToDB } = require("../db/mongoClient"); // or wherever your DB code is
 const jwt = require("jsonwebtoken");
 const secretKey = process.env.VITE_JSON_WEB_KEY;
+console.log('secretKey', secretKey);
 const bcrypt = require("bcrypt");
 
 //TODO encrpyt-decrypt
@@ -29,7 +30,7 @@ const loginUser = async (req, res) => {
     //changed: don't include password into token
     const token = jwt.sign(
       { email, username },
-      process.env.VITE_JSON_WEB_KEY,
+      secretKey,
       {
         expiresIn: "1h",
       }
