@@ -21,12 +21,12 @@ const loginUser = async (req, res) => {
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if(!isMatch) {
+    if (!isMatch) {
       return res.status(401).json({ error: "Invalid email or password." })
     }
     const username = user.username;
     console.log("user backend result - ", user);
-    
+
     //changed: don't include password into token
     const token = jwt.sign(
       { email, username },
@@ -117,7 +117,7 @@ const signupUser = async (req, res) => {
       return res.status(409).json({ error: "email already exists" });
     }
 
-    
+
     //replaced "const result = await users.insertOne({ email, username, password });"
 
     //hash the password
@@ -129,17 +129,17 @@ const signupUser = async (req, res) => {
 
     //save user with hashed password
     console.log("Step 7: inserting user...");
-    const result = await users.insertOne({email, username, password: hashedPassword, balance});
+    const result = await users.insertOne({ email, username, password: hashedPassword, balance });
 
     console.log("Step 8: creating JWT...");
     const token = jwt.sign(
-    {
-      email,
-      username
-    },
-    secretKey,
-    { expiresIn: "1h" }
-  );
+      {
+        email,
+        username
+      },
+      secretKey,
+      { expiresIn: "1h" }
+    );
 
     res.cookie("token", token, {
       httpOnly: true,
@@ -160,4 +160,47 @@ const signupUser = async (req, res) => {
   }
 };
 
-module.exports = { loginUser, signupUser, clearCookies };
+const getBalance = async (req, res) => {
+  try {
+    console.log("req.body.username", req.body.username)
+    console.log("Step 3: connecting to DB...");
+    const db = await connectToDB();
+    console.log("Step 4: connected to DB");
+
+    const users = db.collection("users");
+    const username = req.body.username;
+    const user = await users.findOne({ username });
+    console.log("user : ", user);
+    if(user){
+      return res
+      .status(200)
+      .json({ balance : user.balance});
+    }
+  } catch (error) {
+    console.error("Get user error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+//  NEEDS WORK
+const updateBalance = async (req, res) => {
+  try {
+    console.log("Step 3: connecting to DB...");
+    const db = await connectToDB();
+    console.log("Step 4: connected to DB");
+
+    const users = db.collection("users");
+
+    const user = await users.findOne({ username });
+    if(user){
+      return res
+      .status(400)
+      .json({ user : user});
+    }
+  } catch (error) {
+    console.error("Get user error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+
+module.exports = { loginUser, signupUser, getBalance, updateBalance, clearCookies };

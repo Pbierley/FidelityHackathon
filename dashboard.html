@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,18 +13,18 @@
             color: #ffffff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        
+
         .navbar {
             background-color: #1a1f2e !important;
             border-bottom: 1px solid #2d3748;
         }
-        
+
         .navbar-brand {
             color: #00d4aa !important;
             font-weight: bold;
             font-size: 1.5rem;
         }
-        
+
         .search-container {
             background: #1a1f2e;
             border-radius: 8px;
@@ -31,21 +32,21 @@
             margin-bottom: 20px;
             border: 1px solid #2d3748;
         }
-        
+
         .search-input {
             background: #2d3748;
             border: 1px solid #4a5568;
             color: #ffffff;
             border-radius: 6px;
         }
-        
+
         .search-input:focus {
             background: #2d3748;
             border-color: #00d4aa;
             box-shadow: 0 0 0 0.2rem rgba(0, 212, 170, 0.25);
             color: #ffffff;
         }
-        
+
         .chart-container {
             background: #1a1f2e;
             border-radius: 8px;
@@ -53,7 +54,7 @@
             border: 1px solid #2d3748;
             height: 500px;
         }
-        
+
         .trading-panel {
             background: #1a1f2e;
             border-radius: 8px;
@@ -61,7 +62,7 @@
             border: 1px solid #2d3748;
             height: 500px;
         }
-        
+
         .stock-info {
             background: #0f1419;
             border-radius: 6px;
@@ -69,15 +70,15 @@
             margin-bottom: 20px;
             border-left: 4px solid #00d4aa;
         }
-        
+
         .price-positive {
             color: #00d4aa;
         }
-        
+
         .price-negative {
             color: #ff4757;
         }
-        
+
         .btn-buy {
             background: #00d4aa;
             border: none;
@@ -88,12 +89,12 @@
             width: 100%;
             margin-bottom: 10px;
         }
-        
+
         .btn-buy:hover {
             background: #00b894;
             color: #000;
         }
-        
+
         .btn-sell {
             background: #ff4757;
             border: none;
@@ -103,45 +104,45 @@
             padding: 10px 20px;
             width: 100%;
         }
-        
+
         .btn-sell:hover {
             background: #ff3742;
             color: #fff;
         }
-        
+
         .form-control {
             background: #2d3748;
             border: 1px solid #4a5568;
             color: #ffffff;
             border-radius: 6px;
         }
-        
+
         .form-control:focus {
             background: #2d3748;
             border-color: #00d4aa;
             box-shadow: 0 0 0 0.2rem rgba(0, 212, 170, 0.25);
             color: #ffffff;
         }
-        
+
         .form-label {
             color: #a0aec0;
             font-weight: 500;
         }
-        
+
         .balance-info {
             background: #0f1419;
             border-radius: 6px;
             padding: 15px;
             margin-bottom: 20px;
         }
-        
+
         .order-summary {
             background: #0f1419;
             border-radius: 6px;
             padding: 15px;
             margin-top: 15px;
         }
-        
+
         .suggestion-item {
             background: #2d3748;
             border: none;
@@ -153,11 +154,11 @@
             width: 100%;
             text-align: left;
         }
-        
+
         .suggestion-item:hover {
             background: #4a5568;
         }
-        
+
         .suggestions-dropdown {
             position: absolute;
             top: 100%;
@@ -171,12 +172,13 @@
             overflow-y: auto;
             display: none;
         }
-        
+
         .position-relative {
             position: relative;
         }
     </style>
 </head>
+
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
@@ -197,10 +199,8 @@
                 <div class="search-container">
                     <h5><i class="fas fa-search"></i> Stock Search</h5>
                     <div class="position-relative">
-                        <input type="text" 
-                               class="form-control search-input" 
-                               id="stockSearch" 
-                               placeholder="Search for stocks (e.g., AAPL, GOOGL, TSLA...)">
+                        <input type="text" class="form-control search-input" id="stockSearch"
+                            placeholder="Search for stocks (e.g., AAPL, GOOGL, TSLA...)">
                         <div class="suggestions-dropdown" id="suggestions">
                             <!-- Suggestions will be populated here -->
                         </div>
@@ -219,7 +219,8 @@
                     <!-- Stock Info -->
                     <div class="stock-info">
                         <div class="d-flex align-items-center mb-2">
-                            <img id="stockLogo" src="" alt="" style="width: 32px; height: 32px; margin-right: 10px; display: none;">
+                            <img id="stockLogo" src="" alt=""
+                                style="width: 32px; height: 32px; margin-right: 10px; display: none;">
                             <h4 id="stockSymbol">Loading...</h4>
                         </div>
                         <h3 id="stockPrice" class="price-positive">--</h3>
@@ -309,18 +310,18 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    
+
     <script>
         // API Configuration
         const url = "http://localhost:4000";
-        
+
         // Cache for stock data
         let allStocksCache = [];
         let stockDataCache = {};
         let currentStock = null;
         let currentStockData = null;
         let chart;
-        let cashBalance = 10000.00;
+        let cashBalance = 0.00;
 
         // Alert functions
         function showWarningAlert(message) {
@@ -338,14 +339,21 @@
                     method: "GET",
                     credentials: "include",
                 });
-                
+
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                
+
                 const data = await response.json();
                 allStocksCache = data;
                 console.log("All stocks loaded:", data.length, "stocks");
+                cashBalance = getUserBalance() / 2;
+                const balanceElement = document.getElementById("cashBalance");
+                balanceElement.textContent = `$${cashBalance.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                })}`;
+                console.log(cashBalance)
                 return data;
             } catch (error) {
                 console.error("Error fetching all stocks:", error);
@@ -376,7 +384,7 @@
 
                 const apiData = await response.json();
                 const processedData = processStockData(apiData);
-                
+
                 if (processedData) {
                     stockDataCache[ticker] = processedData;
                     return processedData;
@@ -384,7 +392,7 @@
                     showWarningAlert("No trading data available for this stock.");
                     return null;
                 }
-                
+
             } catch (error) {
                 console.error('Error fetching stock data:', error);
                 showWarningAlert("Failed to fetch stock data. Please try again.");
@@ -397,22 +405,22 @@
             if (!apiData || !apiData.tradingData || apiData.tradingData.length === 0) {
                 return null;
             }
-            
+
             const tradingData = apiData.tradingData;
             const latestData = tradingData[tradingData.length - 1];
             const previousData = tradingData.length > 1 ? tradingData[tradingData.length - 2] : latestData;
-            
+
             const currentPrice = latestData.c;
             const previousPrice = previousData.c;
             const change = currentPrice - previousPrice;
             const changePercent = (change / previousPrice) * 100;
-            
+
             const chartData = tradingData.slice(-30).map(day => day.c);
             const timeLabels = tradingData.slice(-30).map(day => {
                 const date = new Date(day.t);
                 return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             });
-            
+
             return {
                 symbol: apiData.ticker,
                 name: apiData.name,
@@ -429,6 +437,18 @@
                 description: apiData.description,
                 logo: apiData.logo
             };
+        }
+
+        function getCookie(name) {
+            const cDecoded = decodeURIComponent(document.cookie);
+            const cArray = cDecoded.split("; ");
+            let result = null;
+            cArray.forEach((element) => {
+                if (element.indexOf(name) == 0) {
+                    result = element.substring(name.length + 1);
+                }
+            });
+            return result;
         }
 
         // Initialize chart
@@ -461,7 +481,7 @@
                             mode: 'index',
                             intersect: false,
                             callbacks: {
-                                label: function(context) {
+                                label: function (context) {
                                     return `${context.dataset.label}: $${context.parsed.y.toFixed(2)}`;
                                 }
                             }
@@ -473,9 +493,9 @@
                             grid: { color: '#2d3748' }
                         },
                         y: {
-                            ticks: { 
+                            ticks: {
                                 color: '#a0aec0',
-                                callback: function(value) {
+                                callback: function (value) {
                                     return '$' + value.toFixed(2);
                                 }
                             },
@@ -486,217 +506,254 @@
             });
         }
 
+        // Function to create balance
+        async function getUserBalance() {
+            //  use cookie to get username for the call to the database to get balance
+            const username = getCookie("username");
+            console.log("username", username);
+            //  make api call here 
+            try {
+                const response = await fetch(`${url}/users/getBalance`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ username: username }),
+                    credentials: "include",
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        showWarningAlert("You must be logged in to have a balance to trade.");
+                    } else {
+                        showWarningAlert("Failed to fetch user data. Please try again.");
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const apiData = await response.json();
+                console.log("apiData", apiData);
+                if(apiData){
+                    return apiData.balance;
+                }
+
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+                showWarningAlert("Failed to fetch user data. Please try again.");
+                return null;
+            }
+        }
         // Update stock display with API data
         async function updateStockDisplay(symbol) {
-            // Show loading state
-            document.getElementById('stockSymbol').textContent = symbol;
-            document.getElementById('stockPrice').textContent = 'Loading...';
-            document.getElementById('stockChange').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
-            document.getElementById('stockOpen').textContent = '--';
-            document.getElementById('stockHigh').textContent = '--';
-            document.getElementById('stockLow').textContent = '--';
-            document.getElementById('stockVolume').textContent = '--';
-            
-            const logoImg = document.getElementById('stockLogo');
-            logoImg.style.display = 'none';
-            
-            // Fetch data from API
-            const stockData = await fetchStockData(symbol);
-            
-            if (!stockData) {
-                document.getElementById('stockPrice').textContent = 'Error';
-                document.getElementById('stockChange').innerHTML = '<i class="fas fa-exclamation-triangle"></i> Failed to load';
-                return;
-            }
-            
-            currentStock = symbol;
-            currentStockData = stockData;
-            
-            // Update display with real data
-            document.getElementById('stockSymbol').textContent = `${stockData.symbol}`;
-            document.getElementById('stockPrice').textContent = `$${stockData.price.toFixed(2)}`;
-            
-            // Update additional stock info
-            document.getElementById('stockOpen').textContent = `$${stockData.open.toFixed(2)}`;
-            document.getElementById('stockHigh').textContent = `$${stockData.high.toFixed(2)}`;
-            document.getElementById('stockLow').textContent = `$${stockData.low.toFixed(2)}`;
-            document.getElementById('stockVolume').textContent = stockData.volume.toLocaleString();
-            
-            // Show logo if available
-            if (stockData.logo) {
-                logoImg.src = stockData.logo;
-                logoImg.alt = stockData.name;
-                logoImg.style.display = 'inline-block';
-                logoImg.onerror = function() {
-                    this.style.display = 'none';
-                };
-            }
-            
-            const changeElement = document.getElementById('stockChange');
-            const change = stockData.change || 0;
-            const changePercent = stockData.changePercent || 0;
-            const isPositive = change >= 0;
-            
-            changeElement.className = isPositive ? 'price-positive' : 'price-negative';
-            changeElement.innerHTML = `<i class="fas fa-arrow-${isPositive ? 'up' : 'down'}"></i> ${isPositive ? '+' : ''}$${Math.abs(change).toFixed(2)} (${isPositive ? '+' : ''}${changePercent.toFixed(2)}%)`;
-            
-            // Update chart with historical data
-            if (stockData.historicalData && chart) {
-                chart.data.datasets[0].label = `${stockData.symbol} Price`;
-                chart.data.datasets[0].data = stockData.historicalData;
-                chart.data.datasets[0].borderColor = isPositive ? '#00d4aa' : '#ff4757';
-                chart.data.datasets[0].backgroundColor = isPositive ? 'rgba(0, 212, 170, 0.1)' : 'rgba(255, 71, 87, 0.1)';
-                
-                if (stockData.timeLabels) {
-                    chart.data.labels = stockData.timeLabels;
+                // Show loading state
+                document.getElementById('stockSymbol').textContent = symbol;
+                document.getElementById('stockPrice').textContent = 'Loading...';
+                document.getElementById('stockChange').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+                document.getElementById('stockOpen').textContent = '--';
+                document.getElementById('stockHigh').textContent = '--';
+                document.getElementById('stockLow').textContent = '--';
+                document.getElementById('stockVolume').textContent = '--';
+
+                const logoImg = document.getElementById('stockLogo');
+                logoImg.style.display = 'none';
+
+                // Fetch data from API
+                const stockData = await fetchStockData(symbol);
+
+                if (!stockData) {
+                    document.getElementById('stockPrice').textContent = 'Error';
+                    document.getElementById('stockChange').innerHTML = '<i class="fas fa-exclamation-triangle"></i> Failed to load';
+                    return;
                 }
-                
-                chart.update();
-            }
-            
-            updateOrderSummary();
-        }
 
-        // Update order summary
-        function updateOrderSummary() {
-            if (!currentStockData) return;
-            
-            const quantity = parseInt(document.getElementById('quantity').value) || 0;
-            const orderType = document.getElementById('orderType').value;
-            
-            let price = currentStockData.price;
-            if (orderType === 'limit') {
-                const limitPrice = parseFloat(document.getElementById('limitPrice').value);
-                if (limitPrice > 0) price = limitPrice;
-            }
-            
-            const total = price * quantity;
-            
-            document.getElementById('pricePerShare').textContent = `$${price.toFixed(2)}`;
-            document.getElementById('orderQuantity').textContent = quantity;
-            document.getElementById('totalCost').textContent = `$${total.toFixed(2)}`;
-        }
+                currentStock = symbol;
+                currentStockData = stockData;
 
-        // Search functionality with API integration
-        function setupSearch() {
-            const searchInput = document.getElementById('stockSearch');
-            const suggestionsDiv = document.getElementById('suggestions');
-            
-            searchInput.addEventListener('input', function() {
-                const query = this.value.toUpperCase().trim();
-                suggestionsDiv.innerHTML = '';
-                
-                if (query.length > 0) {
-                    // Filter from all stocks cache
-                    const matches = allStocksCache.filter(stock => 
-                        stock.ticker.includes(query) || 
-                        stock.name.toUpperCase().includes(query)
-                    ).slice(0, 10); // Limit to 10 suggestions
-                    
-                    if (matches.length > 0) {
-                        matches.forEach(stock => {
+                // Update display with real data
+                document.getElementById('stockSymbol').textContent = `${stockData.symbol}`;
+                document.getElementById('stockPrice').textContent = `$${stockData.price.toFixed(2)}`;
+
+                // Update additional stock info
+                document.getElementById('stockOpen').textContent = `$${stockData.open.toFixed(2)}`;
+                document.getElementById('stockHigh').textContent = `$${stockData.high.toFixed(2)}`;
+                document.getElementById('stockLow').textContent = `$${stockData.low.toFixed(2)}`;
+                document.getElementById('stockVolume').textContent = stockData.volume.toLocaleString();
+
+                // Show logo if available
+                if (stockData.logo) {
+                    logoImg.src = stockData.logo;
+                    logoImg.alt = stockData.name;
+                    logoImg.style.display = 'inline-block';
+                    logoImg.onerror = function () {
+                        this.style.display = 'none';
+                    };
+                }
+
+                const changeElement = document.getElementById('stockChange');
+                const change = stockData.change || 0;
+                const changePercent = stockData.changePercent || 0;
+                const isPositive = change >= 0;
+
+                changeElement.className = isPositive ? 'price-positive' : 'price-negative';
+                changeElement.innerHTML = `<i class="fas fa-arrow-${isPositive ? 'up' : 'down'}"></i> ${isPositive ? '+' : ''}$${Math.abs(change).toFixed(2)} (${isPositive ? '+' : ''}${changePercent.toFixed(2)}%)`;
+
+                // Update chart with historical data
+                if (stockData.historicalData && chart) {
+                    chart.data.datasets[0].label = `${stockData.symbol} Price`;
+                    chart.data.datasets[0].data = stockData.historicalData;
+                    chart.data.datasets[0].borderColor = isPositive ? '#00d4aa' : '#ff4757';
+                    chart.data.datasets[0].backgroundColor = isPositive ? 'rgba(0, 212, 170, 0.1)' : 'rgba(255, 71, 87, 0.1)';
+
+                    if (stockData.timeLabels) {
+                        chart.data.labels = stockData.timeLabels;
+                    }
+
+                    chart.update();
+                }
+
+                updateOrderSummary();
+            }
+
+            // Update order summary
+            function updateOrderSummary() {
+                if (!currentStockData) return;
+
+                const quantity = parseInt(document.getElementById('quantity').value) || 0;
+                const orderType = document.getElementById('orderType').value;
+
+                let price = currentStockData.price;
+                if (orderType === 'limit') {
+                    const limitPrice = parseFloat(document.getElementById('limitPrice').value);
+                    if (limitPrice > 0) price = limitPrice;
+                }
+
+                const total = price * quantity;
+
+                document.getElementById('pricePerShare').textContent = `$${price.toFixed(2)}`;
+                document.getElementById('orderQuantity').textContent = quantity;
+                document.getElementById('totalCost').textContent = `$${total.toFixed(2)}`;
+            }
+
+            // Search functionality with API integration
+            function setupSearch() {
+                const searchInput = document.getElementById('stockSearch');
+                const suggestionsDiv = document.getElementById('suggestions');
+
+                searchInput.addEventListener('input', function () {
+                    const query = this.value.toUpperCase().trim();
+                    suggestionsDiv.innerHTML = '';
+
+                    if (query.length > 0) {
+                        // Filter from all stocks cache
+                        const matches = allStocksCache.filter(stock =>
+                            stock.ticker.includes(query) ||
+                            stock.name.toUpperCase().includes(query)
+                        ).slice(0, 10); // Limit to 10 suggestions
+
+                        if (matches.length > 0) {
+                            matches.forEach(stock => {
+                                const div = document.createElement('div');
+                                div.className = 'suggestion-item';
+                                div.innerHTML = `<strong>${stock.ticker}</strong> - ${stock.name}`;
+                                div.onclick = () => {
+                                    searchInput.value = `${stock.ticker} - ${stock.name}`;
+                                    updateStockDisplay(stock.ticker);
+                                    suggestionsDiv.style.display = 'none';
+                                };
+                                suggestionsDiv.appendChild(div);
+                            });
+                            suggestionsDiv.style.display = 'block';
+                        } else {
+                            // If no matches found, allow user to search anyway
                             const div = document.createElement('div');
                             div.className = 'suggestion-item';
-                            div.innerHTML = `<strong>${stock.ticker}</strong> - ${stock.name}`;
+                            div.innerHTML = `<i class="fas fa-search"></i> Search for "${query}"`;
                             div.onclick = () => {
-                                searchInput.value = `${stock.ticker} - ${stock.name}`;
-                                updateStockDisplay(stock.ticker);
+                                searchInput.value = query;
+                                updateStockDisplay(query);
                                 suggestionsDiv.style.display = 'none';
                             };
                             suggestionsDiv.appendChild(div);
-                        });
-                        suggestionsDiv.style.display = 'block';
+                            suggestionsDiv.style.display = 'block';
+                        }
                     } else {
-                        // If no matches found, allow user to search anyway
-                        const div = document.createElement('div');
-                        div.className = 'suggestion-item';
-                        div.innerHTML = `<i class="fas fa-search"></i> Search for "${query}"`;
-                        div.onclick = () => {
-                            searchInput.value = query;
-                            updateStockDisplay(query);
-                            suggestionsDiv.style.display = 'none';
-                        };
-                        suggestionsDiv.appendChild(div);
-                        suggestionsDiv.style.display = 'block';
-                    }
-                } else {
-                    suggestionsDiv.style.display = 'none';
-                }
-            });
-            
-            // Handle Enter key
-            searchInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    const ticker = this.value.split(' - ')[0].toUpperCase().trim();
-                    if (ticker) {
-                        updateStockDisplay(ticker);
                         suggestionsDiv.style.display = 'none';
                     }
-                }
-            });
-            
-            // Hide suggestions when clicking outside
-            document.addEventListener('click', function(e) {
-                if (!searchInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
-                    suggestionsDiv.style.display = 'none';
-                }
-            });
-        }
+                });
 
-        // Order type change handler
-        document.getElementById('orderType').addEventListener('change', function() {
-            const limitPriceDiv = document.getElementById('limitPriceDiv');
-            if (this.value === 'limit') {
-                limitPriceDiv.style.display = 'block';
-                if (currentStockData) {
-                    document.getElementById('limitPrice').value = currentStockData.price.toFixed(2);
-                }
-            } else {
-                limitPriceDiv.style.display = 'none';
+                // Handle Enter key
+                searchInput.addEventListener('keypress', function (e) {
+                    if (e.key === 'Enter') {
+                        const ticker = this.value.split(' - ')[0].toUpperCase().trim();
+                        if (ticker) {
+                            updateStockDisplay(ticker);
+                            suggestionsDiv.style.display = 'none';
+                        }
+                    }
+                });
+
+                // Hide suggestions when clicking outside
+                document.addEventListener('click', function (e) {
+                    if (!searchInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
+                        suggestionsDiv.style.display = 'none';
+                    }
+                });
             }
-            updateOrderSummary();
-        });
 
-        // Quantity change handler
-        document.getElementById('quantity').addEventListener('input', updateOrderSummary);
-        document.getElementById('limitPrice').addEventListener('input', updateOrderSummary);
+            // Order type change handler
+            document.getElementById('orderType').addEventListener('change', function () {
+                const limitPriceDiv = document.getElementById('limitPriceDiv');
+                if (this.value === 'limit') {
+                    limitPriceDiv.style.display = 'block';
+                    if (currentStockData) {
+                        document.getElementById('limitPrice').value = currentStockData.price.toFixed(2);
+                    }
+                } else {
+                    limitPriceDiv.style.display = 'none';
+                }
+                updateOrderSummary();
+            });
 
-        // Execute trade
-        function executeTrade(action) {
-            if (!currentStockData) {
-                showWarningAlert('Please select a stock first');
-                return;
-            }
-            
-            const quantity = parseInt(document.getElementById('quantity').value);
-            const totalCost = parseFloat(document.getElementById('totalCost').textContent.replace('$', ''));
-            
-            if (action === 'buy') {
-                if (totalCost > cashBalance) {
-                    showWarningAlert('Insufficient funds!');
+            // Quantity change handler
+            document.getElementById('quantity').addEventListener('input', updateOrderSummary);
+            document.getElementById('limitPrice').addEventListener('input', updateOrderSummary);
+
+            // Execute trade
+            function executeTrade(action) {
+                if (!currentStockData) {
+                    showWarningAlert('Please select a stock first');
                     return;
                 }
-                cashBalance -= totalCost;
-                showSuccessAlert(`Successfully bought ${quantity} shares of ${currentStock} for $${totalCost.toFixed(2)}`);
-            } else {
-                cashBalance += totalCost;
-                showSuccessAlert(`Successfully sold ${quantity} shares of ${currentStock} for $${totalCost.toFixed(2)}`);
-            }
-            
-            document.getElementById('cashBalance').textContent = `$${cashBalance.toFixed(2)}`;
-        }
 
-        // Initialize everything
-        window.addEventListener('load', async function() {
-            initChart();
-            setupSearch();
-            
-            // Load all stocks for search functionality
-            await fetchAllStocks();
-            
-            // Load initial stock (META as example)
-            updateStockDisplay('META');
-        });
+                const quantity = parseInt(document.getElementById('quantity').value);
+                const totalCost = parseFloat(document.getElementById('totalCost').textContent.replace('$', ''));
+
+                if (action === 'buy') {
+                    if (totalCost > cashBalance) {
+                        showWarningAlert('Insufficient funds!');
+                        return;
+                    }
+                    cashBalance -= totalCost;
+                    showSuccessAlert(`Successfully bought ${quantity} shares of ${currentStock} for $${totalCost.toFixed(2)}`);
+                } else {
+                    cashBalance += totalCost;
+                    showSuccessAlert(`Successfully sold ${quantity} shares of ${currentStock} for $${totalCost.toFixed(2)}`);
+                }
+
+                document.getElementById('cashBalance').textContent = `$${cashBalance.toFixed(2)}`;
+            }
+
+            // Initialize everything
+            window.addEventListener('load', async function () {
+                initChart();
+                setupSearch();
+
+                // Load all stocks for search functionality
+                await fetchAllStocks();
+
+                // Load initial stock (META as example)
+                updateStockDisplay('META');
+            });
     </script>
 </body>
+
 </html>

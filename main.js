@@ -66,6 +66,7 @@ function fetchStock() {
     .catch((error) => console.error("Error:", error));
 }
 function displayIndividualStock(stock) {
+  console.log("stock", stock);
   stockContainer.innerHTML = "";
 
   const cardDiv = document.createElement("div");
