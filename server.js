@@ -36,6 +36,9 @@ app.use(
 // app.set('view engine', 'ejs'); // and add views/ folder, etc.
 
 // ---------- Routes ----------
+app.get("/dashboard", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "dashboard.html"));
+});
 app.get('/', (req, res) => {
   console.log('GET /');
   // res.render('index'); // <- requires a configured view engine

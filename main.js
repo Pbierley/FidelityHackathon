@@ -9,6 +9,7 @@ const LoginSubmit = document.getElementById("LoginSubmit");
 const SignupSubmit = document.getElementById("SignupSubmit");
 const cancelLogin = document.getElementById("cancelLogin");
 const cancelSignup = document.getElementById("cancelSignup");
+const DashboardButton = document.getElementById("DashboardButton");
 
 LoginButton.addEventListener("click", () => { hideLogin(), hideSignup() });
 SignupButton.addEventListener("click", () => { hideLogin() });
@@ -18,6 +19,9 @@ LoginSubmit.addEventListener("click", () => { Login() });
 SignupSubmit.addEventListener("click", () => { Signup() });
 cancelLogin.addEventListener("click", () => { hideLogin() });
 cancelSignup.addEventListener("click", () => { hideSignup() });
+DashboardButton.addEventListener("click", () => {
+  window.location.href = "/dashboard";
+});
 
 function fetchAllStocks() {
   fetch(`${url}/stocks/all`, {
