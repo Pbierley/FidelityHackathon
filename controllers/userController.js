@@ -312,6 +312,36 @@ const sellAsset = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+const getPositions = async (req, res) => {
+  try {
+    const db = await connectToDB();
+    const users = db.collection("users");
+
+    const { username } = req.body;
+
+    // 1. Find user
+    const user = await users.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // 2. Ensure positions object exists (optional)
+    if (!user.positions) {
+      // Initialize positions if missing
+      await users.updateOne(
+        { _id: user._id },
+        { $set: { positions: {} } }
+      );
+      user.positions = {};
+    }
+
+    // 3. Return positions
+    return res.status(200).json({ positions: user.positions });
+  } catch (error) {
+    console.error("Get positions error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
 
 
-module.exports = { loginUser, signupUser, getBalance, updateBalance, buyAsset, sellAsset, clearCookies };
+module.exports = { loginUser, signupUser, getBalance, updateBalance, buyAsset, sellAsset, getPositions, clearCookies };

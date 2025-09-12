@@ -49,9 +49,18 @@ Content-Type: application/json
     "ticker":"AAPL", "username":"1", "comment":"example comment"
 }
 ### get Comments
-GET http://localhost:4000/comments/AAPL
+POST http://localhost:4000/users/getPositions
 Content-Type: application/json
+
+{
+    "username":"new"
+}
+
 
 ### GET
 GET GET https://api.polygon.io/v2/aggs/ticker/MSFT/range/1/day/2023-01-09/2023-02-10?adjusted=true&sort=asc&limit=120&apiKey=
+Content-Type: application/json
+
+### GET
+GET https://api.polygon.io/v3/reference/options/contracts?underlying_ticker=AAPL&limit=50&apiKey=
 Content-Type: application/json

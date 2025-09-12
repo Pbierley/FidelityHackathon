@@ -5,6 +5,7 @@ const {
   loginUser,
   signupUser,
   getBalance,
+  getPositions,
   updateBalance,
   buyAsset,
   clearCookies,
@@ -16,6 +17,7 @@ const { authToken } = require("../middleware/authToken");
 router.post("/login", loginUser);
 router.post("/signup", signupUser);
 router.post("/getBalance", getBalance);
+router.post("/getPositions", getPositions);
 router.post("/updateBalance", updateBalance);
 router.post("/buyAsset", buyAsset);
 router.post("/sellAsset", sellAsset);
