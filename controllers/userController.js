@@ -124,10 +124,12 @@ const signupUser = async (req, res) => {
     console.log("Step 6: hashing password...");
     saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
+    //  adding in paperTrading account
+    const balance = 10000;
 
     //save user with hashed password
     console.log("Step 7: inserting user...");
-    const result = await users.insertOne({email, username, password: hashedPassword});
+    const result = await users.insertOne({email, username, password: hashedPassword, balance});
 
     console.log("Step 8: creating JWT...");
     const token = jwt.sign(
