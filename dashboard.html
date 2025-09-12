@@ -218,11 +218,32 @@
                 <div class="trading-panel">
                     <!-- Stock Info -->
                     <div class="stock-info">
-                        <h4 id="stockSymbol">AAPL</h4>
-                        <h3 id="stockPrice" class="price-positive">$150.25</h3>
+                        <div class="d-flex align-items-center mb-2">
+                            <img id="stockLogo" src="" alt="" style="width: 32px; height: 32px; margin-right: 10px; display: none;">
+                            <h4 id="stockSymbol">Loading...</h4>
+                        </div>
+                        <h3 id="stockPrice" class="price-positive">--</h3>
                         <p id="stockChange" class="price-positive">
-                            <i class="fas fa-arrow-up"></i> +$2.15 (+1.45%)
+                            <i class="fas fa-spinner fa-spin"></i> Loading...
                         </p>
+                        <div class="row mt-2">
+                            <div class="col-6">
+                                <small class="text-muted">Open: </small>
+                                <span id="stockOpen">--</span>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Volume: </small>
+                                <span id="stockVolume">--</span>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">High: </small>
+                                <span id="stockHigh">--</span>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Low: </small>
+                                <span id="stockLow">--</span>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Balance Info -->
@@ -255,7 +276,7 @@
                     <div class="order-summary">
                         <div class="d-flex justify-content-between">
                             <span>Price per share:</span>
-                            <span id="pricePerShare">$150.25</span>
+                            <span id="pricePerShare">--</span>
                         </div>
                         <div class="d-flex justify-content-between">
                             <span>Quantity:</span>
@@ -268,7 +289,7 @@
                         <hr style="border-color: #2d3748;">
                         <div class="d-flex justify-content-between">
                             <strong>Total Cost:</strong>
-                            <strong id="totalCost">$150.25</strong>
+                            <strong id="totalCost">--</strong>
                         </div>
                     </div>
 
@@ -290,48 +311,125 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     
     <script>
-        // Stock data
-        const stockData = {
-            'AAPL': { 
-                name: 'Apple Inc.', 
-                price: 150.25, 
-                change: 2.15, 
-                changePercent: 1.45,
-                data: [145, 147, 149, 148, 151, 150.25, 152, 149, 148, 150.25]
-            },
-            'GOOGL': { 
-                name: 'Alphabet Inc.', 
-                price: 2500.80, 
-                change: -15.20, 
-                changePercent: -0.60,
-                data: [2520, 2515, 2510, 2505, 2500, 2495, 2490, 2495, 2500, 2500.80]
-            },
-            'TSLA': { 
-                name: 'Tesla Inc.', 
-                price: 245.67, 
-                change: 12.34, 
-                changePercent: 5.29,
-                data: [230, 235, 240, 238, 242, 245, 248, 246, 244, 245.67]
-            },
-            'MSFT': { 
-                name: 'Microsoft Corp.', 
-                price: 420.15, 
-                change: 8.90, 
-                changePercent: 2.16,
-                data: [410, 412, 415, 418, 416, 419, 421, 420, 418, 420.15]
-            },
-            'AMZN': { 
-                name: 'Amazon.com Inc.', 
-                price: 3200.45, 
-                change: -25.67, 
-                changePercent: -0.80,
-                data: [3230, 3225, 3220, 3215, 3210, 3205, 3200, 3195, 3198, 3200.45]
-            }
-        };
-
-        let currentStock = 'AAPL';
+        // API Configuration
+        const url = "http://localhost:4000";
+        
+        // Cache for stock data
+        let allStocksCache = [];
+        let stockDataCache = {};
+        let currentStock = null;
+        let currentStockData = null;
         let chart;
         let cashBalance = 10000.00;
+
+        // Alert functions
+        function showWarningAlert(message) {
+            alert(message);
+        }
+
+        function showSuccessAlert(message) {
+            alert(message);
+        }
+
+        // Fetch all stocks for search suggestions
+        async function fetchAllStocks() {
+            try {
+                const response = await fetch(`${url}/stocks/all`, {
+                    method: "GET",
+                    credentials: "include",
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                allStocksCache = data;
+                console.log("All stocks loaded:", data.length, "stocks");
+                return data;
+            } catch (error) {
+                console.error("Error fetching all stocks:", error);
+                return [];
+            }
+        }
+
+        // Fetch individual stock data
+        async function fetchStockData(ticker) {
+            try {
+                const response = await fetch(`${url}/stocks/${ticker}`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ ticker: ticker }),
+                    credentials: "include",
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        showWarningAlert("You must be logged in to search for stocks.");
+                    } else {
+                        showWarningAlert("Failed to fetch stock data. Please try again.");
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const apiData = await response.json();
+                const processedData = processStockData(apiData);
+                
+                if (processedData) {
+                    stockDataCache[ticker] = processedData;
+                    return processedData;
+                } else {
+                    showWarningAlert("No trading data available for this stock.");
+                    return null;
+                }
+                
+            } catch (error) {
+                console.error('Error fetching stock data:', error);
+                showWarningAlert("Failed to fetch stock data. Please try again.");
+                return null;
+            }
+        }
+
+        // Process API data to extract what we need for the UI
+        function processStockData(apiData) {
+            if (!apiData || !apiData.tradingData || apiData.tradingData.length === 0) {
+                return null;
+            }
+            
+            const tradingData = apiData.tradingData;
+            const latestData = tradingData[tradingData.length - 1];
+            const previousData = tradingData.length > 1 ? tradingData[tradingData.length - 2] : latestData;
+            
+            const currentPrice = latestData.c;
+            const previousPrice = previousData.c;
+            const change = currentPrice - previousPrice;
+            const changePercent = (change / previousPrice) * 100;
+            
+            const chartData = tradingData.slice(-30).map(day => day.c);
+            const timeLabels = tradingData.slice(-30).map(day => {
+                const date = new Date(day.t);
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+            
+            return {
+                symbol: apiData.ticker,
+                name: apiData.name,
+                price: currentPrice,
+                change: change,
+                changePercent: changePercent,
+                historicalData: chartData,
+                timeLabels: timeLabels,
+                volume: latestData.v,
+                marketCap: apiData.market_cap,
+                high: latestData.h,
+                low: latestData.l,
+                open: latestData.o,
+                description: apiData.description,
+                logo: apiData.logo
+            };
+        }
 
         // Initialize chart
         function initChart() {
@@ -339,12 +437,12 @@
             chart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: ['9:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '1:00', '1:30', '2:00'],
+                    labels: ['Loading...'],
                     datasets: [{
-                        label: currentStock,
-                        data: stockData[currentStock].data,
-                        borderColor: stockData[currentStock].change >= 0 ? '#00d4aa' : '#ff4757',
-                        backgroundColor: stockData[currentStock].change >= 0 ? 'rgba(0, 212, 170, 0.1)' : 'rgba(255, 71, 87, 0.1)',
+                        label: 'Stock Price',
+                        data: [0],
+                        borderColor: '#00d4aa',
+                        backgroundColor: 'rgba(0, 212, 170, 0.1)',
                         borderWidth: 2,
                         fill: true,
                         tension: 0.1
@@ -358,6 +456,15 @@
                             labels: {
                                 color: '#ffffff'
                             }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: $${context.parsed.y.toFixed(2)}`;
+                                }
+                            }
                         }
                     },
                     scales: {
@@ -366,7 +473,12 @@
                             grid: { color: '#2d3748' }
                         },
                         y: {
-                            ticks: { color: '#a0aec0' },
+                            ticks: { 
+                                color: '#a0aec0',
+                                callback: function(value) {
+                                    return '$' + value.toFixed(2);
+                                }
+                            },
                             grid: { color: '#2d3748' }
                         }
                     }
@@ -374,36 +486,85 @@
             });
         }
 
-        // Update stock display
-        function updateStockDisplay(symbol) {
-            const stock = stockData[symbol];
-            currentStock = symbol;
-            
+        // Update stock display with API data
+        async function updateStockDisplay(symbol) {
+            // Show loading state
             document.getElementById('stockSymbol').textContent = symbol;
-            document.getElementById('stockPrice').textContent = `$${stock.price.toFixed(2)}`;
+            document.getElementById('stockPrice').textContent = 'Loading...';
+            document.getElementById('stockChange').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+            document.getElementById('stockOpen').textContent = '--';
+            document.getElementById('stockHigh').textContent = '--';
+            document.getElementById('stockLow').textContent = '--';
+            document.getElementById('stockVolume').textContent = '--';
+            
+            const logoImg = document.getElementById('stockLogo');
+            logoImg.style.display = 'none';
+            
+            // Fetch data from API
+            const stockData = await fetchStockData(symbol);
+            
+            if (!stockData) {
+                document.getElementById('stockPrice').textContent = 'Error';
+                document.getElementById('stockChange').innerHTML = '<i class="fas fa-exclamation-triangle"></i> Failed to load';
+                return;
+            }
+            
+            currentStock = symbol;
+            currentStockData = stockData;
+            
+            // Update display with real data
+            document.getElementById('stockSymbol').textContent = `${stockData.symbol}`;
+            document.getElementById('stockPrice').textContent = `$${stockData.price.toFixed(2)}`;
+            
+            // Update additional stock info
+            document.getElementById('stockOpen').textContent = `$${stockData.open.toFixed(2)}`;
+            document.getElementById('stockHigh').textContent = `$${stockData.high.toFixed(2)}`;
+            document.getElementById('stockLow').textContent = `$${stockData.low.toFixed(2)}`;
+            document.getElementById('stockVolume').textContent = stockData.volume.toLocaleString();
+            
+            // Show logo if available
+            if (stockData.logo) {
+                logoImg.src = stockData.logo;
+                logoImg.alt = stockData.name;
+                logoImg.style.display = 'inline-block';
+                logoImg.onerror = function() {
+                    this.style.display = 'none';
+                };
+            }
             
             const changeElement = document.getElementById('stockChange');
-            const isPositive = stock.change >= 0;
-            changeElement.className = isPositive ? 'price-positive' : 'price-negative';
-            changeElement.innerHTML = `<i class="fas fa-arrow-${isPositive ? 'up' : 'down'}"></i> ${isPositive ? '+' : ''}$${stock.change.toFixed(2)} (${isPositive ? '+' : ''}${stock.changePercent.toFixed(2)}%)`;
+            const change = stockData.change || 0;
+            const changePercent = stockData.changePercent || 0;
+            const isPositive = change >= 0;
             
-            // Update chart
-            chart.data.datasets[0].label = symbol;
-            chart.data.datasets[0].data = stock.data;
-            chart.data.datasets[0].borderColor = isPositive ? '#00d4aa' : '#ff4757';
-            chart.data.datasets[0].backgroundColor = isPositive ? 'rgba(0, 212, 170, 0.1)' : 'rgba(255, 71, 87, 0.1)';
-            chart.update();
+            changeElement.className = isPositive ? 'price-positive' : 'price-negative';
+            changeElement.innerHTML = `<i class="fas fa-arrow-${isPositive ? 'up' : 'down'}"></i> ${isPositive ? '+' : ''}$${Math.abs(change).toFixed(2)} (${isPositive ? '+' : ''}${changePercent.toFixed(2)}%)`;
+            
+            // Update chart with historical data
+            if (stockData.historicalData && chart) {
+                chart.data.datasets[0].label = `${stockData.symbol} Price`;
+                chart.data.datasets[0].data = stockData.historicalData;
+                chart.data.datasets[0].borderColor = isPositive ? '#00d4aa' : '#ff4757';
+                chart.data.datasets[0].backgroundColor = isPositive ? 'rgba(0, 212, 170, 0.1)' : 'rgba(255, 71, 87, 0.1)';
+                
+                if (stockData.timeLabels) {
+                    chart.data.labels = stockData.timeLabels;
+                }
+                
+                chart.update();
+            }
             
             updateOrderSummary();
         }
 
         // Update order summary
         function updateOrderSummary() {
-            const stock = stockData[currentStock];
+            if (!currentStockData) return;
+            
             const quantity = parseInt(document.getElementById('quantity').value) || 0;
             const orderType = document.getElementById('orderType').value;
             
-            let price = stock.price;
+            let price = currentStockData.price;
             if (orderType === 'limit') {
                 const limitPrice = parseFloat(document.getElementById('limitPrice').value);
                 if (limitPrice > 0) price = limitPrice;
@@ -416,38 +577,61 @@
             document.getElementById('totalCost').textContent = `$${total.toFixed(2)}`;
         }
 
-        // Search functionality
+        // Search functionality with API integration
         function setupSearch() {
             const searchInput = document.getElementById('stockSearch');
             const suggestionsDiv = document.getElementById('suggestions');
             
             searchInput.addEventListener('input', function() {
-                const query = this.value.toUpperCase();
+                const query = this.value.toUpperCase().trim();
                 suggestionsDiv.innerHTML = '';
                 
                 if (query.length > 0) {
-                    const matches = Object.keys(stockData).filter(symbol => 
-                        symbol.includes(query) || stockData[symbol].name.toUpperCase().includes(query)
-                    );
+                    // Filter from all stocks cache
+                    const matches = allStocksCache.filter(stock => 
+                        stock.ticker.includes(query) || 
+                        stock.name.toUpperCase().includes(query)
+                    ).slice(0, 10); // Limit to 10 suggestions
                     
                     if (matches.length > 0) {
-                        matches.forEach(symbol => {
+                        matches.forEach(stock => {
                             const div = document.createElement('div');
                             div.className = 'suggestion-item';
-                            div.innerHTML = `<strong>${symbol}</strong> - ${stockData[symbol].name}`;
+                            div.innerHTML = `<strong>${stock.ticker}</strong> - ${stock.name}`;
                             div.onclick = () => {
-                                searchInput.value = `${symbol} - ${stockData[symbol].name}`;
-                                updateStockDisplay(symbol);
+                                searchInput.value = `${stock.ticker} - ${stock.name}`;
+                                updateStockDisplay(stock.ticker);
                                 suggestionsDiv.style.display = 'none';
                             };
                             suggestionsDiv.appendChild(div);
                         });
                         suggestionsDiv.style.display = 'block';
                     } else {
-                        suggestionsDiv.style.display = 'none';
+                        // If no matches found, allow user to search anyway
+                        const div = document.createElement('div');
+                        div.className = 'suggestion-item';
+                        div.innerHTML = `<i class="fas fa-search"></i> Search for "${query}"`;
+                        div.onclick = () => {
+                            searchInput.value = query;
+                            updateStockDisplay(query);
+                            suggestionsDiv.style.display = 'none';
+                        };
+                        suggestionsDiv.appendChild(div);
+                        suggestionsDiv.style.display = 'block';
                     }
                 } else {
                     suggestionsDiv.style.display = 'none';
+                }
+            });
+            
+            // Handle Enter key
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    const ticker = this.value.split(' - ')[0].toUpperCase().trim();
+                    if (ticker) {
+                        updateStockDisplay(ticker);
+                        suggestionsDiv.style.display = 'none';
+                    }
                 }
             });
             
@@ -464,7 +648,9 @@
             const limitPriceDiv = document.getElementById('limitPriceDiv');
             if (this.value === 'limit') {
                 limitPriceDiv.style.display = 'block';
-                document.getElementById('limitPrice').value = stockData[currentStock].price.toFixed(2);
+                if (currentStockData) {
+                    document.getElementById('limitPrice').value = currentStockData.price.toFixed(2);
+                }
             } else {
                 limitPriceDiv.style.display = 'none';
             }
@@ -477,34 +663,40 @@
 
         // Execute trade
         function executeTrade(action) {
+            if (!currentStockData) {
+                showWarningAlert('Please select a stock first');
+                return;
+            }
+            
             const quantity = parseInt(document.getElementById('quantity').value);
             const totalCost = parseFloat(document.getElementById('totalCost').textContent.replace('$', ''));
             
             if (action === 'buy') {
                 if (totalCost > cashBalance) {
-                    alert('Insufficient funds!');
+                    showWarningAlert('Insufficient funds!');
                     return;
                 }
                 cashBalance -= totalCost;
-                alert(`Successfully bought ${quantity} shares of ${currentStock} for $${totalCost.toFixed(2)}`);
+                showSuccessAlert(`Successfully bought ${quantity} shares of ${currentStock} for $${totalCost.toFixed(2)}`);
             } else {
                 cashBalance += totalCost;
-                alert(`Successfully sold ${quantity} shares of ${currentStock} for $${totalCost.toFixed(2)}`);
+                showSuccessAlert(`Successfully sold ${quantity} shares of ${currentStock} for $${totalCost.toFixed(2)}`);
             }
             
             document.getElementById('cashBalance').textContent = `$${cashBalance.toFixed(2)}`;
         }
 
         // Initialize everything
-        window.addEventListener('load', function() {
+        window.addEventListener('load', async function() {
             initChart();
             setupSearch();
-            updateStockDisplay(currentStock);
             
-            // Set initial search value
-            document.getElementById('stockSearch').value = `${currentStock} - ${stockData[currentStock].name}`;
+            // Load all stocks for search functionality
+            await fetchAllStocks();
+            
+            // Load initial stock (META as example)
+            updateStockDisplay('META');
         });
     </script>
 </body>
 </html>
-
