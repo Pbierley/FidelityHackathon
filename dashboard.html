@@ -355,6 +355,7 @@
             }
         }
 
+        //  fetches the balance from db and then sets the UI
         async function setCashBalance() {
             console.log("setting cash balance");
             cashBalance = await getUserBalance();
@@ -387,12 +388,11 @@
                     body: JSON.stringify({ username: username, balance: newCashBalance }),
                     credentials: "include",
                 });
+                console.log("response from changeCashBalance", response.body);
             }
             catch (err) {
                 console.error("Database error", err.message);
             }
-            //  after its changed the balance on the screen need to be updated
-            setCashBalance();
         }
 
         // Fetch individual stock data
@@ -762,20 +762,16 @@
             const totalCost = parseFloat(document.getElementById('totalCost').textContent.replace('$', ''));
             const ticker = currentStockData.symbol;
             const username = getCookie("username");
-            console.log("username", username);
-            console.log("ticker", ticker);
-            console.log("quantity", quantity);
+            //  log all variables
+            console.log("Executing trade:", { ticker, quantity, totalCost, username });
 
             if (action === 'buy') {
                 if (totalCost > cashBalance) {
                     showWarningAlert('Insufficient funds!');
                     return;
                 }
-                //  try to make change on database
-                //  /buyAsset
-                else{
-                    
-                    try {
+
+                try {
                     const response = await fetch(`${url}/users/buyAsset`, {
                         method: "POST",
                         headers: {
@@ -784,22 +780,26 @@
                         body: JSON.stringify({ username: username, ticker: ticker, amount: quantity }),
                         credentials: "include",
                     });
-                        changeCashBalance();
-                    }
-                    catch(err){
 
-                    }
+                    if (!response.ok) throw new Error("Buy request failed");
+
+                    await changeCashBalance(totalCost);
+                    await setCashBalance(); // refresh UI
+                    showSuccessAlert(`Successfully bought ${quantity} shares of ${currentStock} for $${totalCost.toFixed(2)}`);
+                } catch (err) {
+                    console.error(err);
+                    showWarningAlert("Buy failed, please try again.");
                 }
-                // make call to make cash change on database;
-                
-                showSuccessAlert(`Successfully bought ${quantity} shares of ${currentStock} for $${totalCost.toFixed(2)}`);
             }
-             if (action === 'buy') {
-                //  try to make change on database  
-                
-                
-                    try {
-                    const response = await fetch(`${url}/users/buyAsset`, {
+
+            if (action === 'sell') {
+                //  check user has enough shares to sell
+                if( quantity <= 0 ) {
+                    showWarningAlert('Quantity must be greater than zero!');
+                    return;
+                }
+                try {
+                    const response = await fetch(`${url}/users/sellAsset`, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
@@ -807,12 +807,16 @@
                         body: JSON.stringify({ username: username, ticker: ticker, amount: quantity }),
                         credentials: "include",
                     });
-                        setCashBalance();
-                    }
-                    catch(err){
 
-                    }
-                showSuccessAlert(`Successfully sold ${quantity} shares of ${currentStock} for $${totalCost.toFixed(2)}`);
+                    if (!response.ok) throw new Error("Sell request failed");
+
+                    await changeCashBalance(-totalCost);
+                    await setCashBalance(); // refresh UI
+                    showSuccessAlert(`Successfully sold ${quantity} shares of ${currentStock} for $${totalCost.toFixed(2)}`);
+                } catch (err) {
+                    console.error(err);
+                    showWarningAlert("Sell failed, please try again.");
+                }
             }
 
             document.getElementById('cashBalance').textContent = `$${cashBalance.toFixed(2)}`;

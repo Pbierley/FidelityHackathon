@@ -190,6 +190,7 @@ const updateBalance = async (req, res) => {
     const users = db.collection("users");
     const username = req.body.username;
     const newAmount = req.body.balance;
+    console.log("username and newAmount", username, newAmount);
     const user = await users.findOne({ username });
     console.log("user : ", user);
     if (user) {
@@ -259,5 +260,58 @@ const buyAsset = async (req, res) => {
   }
 };
 
+const sellAsset = async (req, res) => {
+  try {
+    const db = await connectToDB();
+    const users = db.collection("users");
 
-module.exports = { loginUser, signupUser, getBalance, updateBalance, buyAsset, clearCookies };
+    const { username, ticker, amount } = req.body;
+    const amt = parseInt(amount, 10);
+
+    // 1. Find user
+    const user = await users.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // 2. Ensure positions object exists
+    if (!user.positions || !user.positions[ticker]) {
+      return res.status(400).json({ error: `No shares of ${ticker} to sell.` });
+    }
+
+    const currentShares = user.positions[ticker].shares || 0;
+
+    // 3. Check if user has enough shares to sell
+    if (amt > currentShares) {
+      return res.status(400).json({ error: `Not enough shares to sell. You have ${currentShares}` });
+    }
+
+    // 4. Decrement shares
+    await users.updateOne(
+      { _id: user._id },
+      { $inc: { [`positions.${ticker}.shares`]: -amt } }
+    );
+
+    // Optional: remove ticker if shares become 0
+    if (currentShares - amt === 0) {
+      await users.updateOne(
+        { _id: user._id },
+        { $unset: { [`positions.${ticker}`]: "" } }
+      );
+    }
+
+    // 5. Re-fetch updated user
+    const updatedUser = await users.findOne({ username });
+
+    return res
+      .status(200)
+      .json({ balance: updatedUser.balance, positions: updatedUser.positions });
+
+  } catch (error) {
+    console.error("Sell asset error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+
+module.exports = { loginUser, signupUser, getBalance, updateBalance, buyAsset, sellAsset, clearCookies };
