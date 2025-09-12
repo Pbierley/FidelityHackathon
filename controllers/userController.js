@@ -171,10 +171,10 @@ const getBalance = async (req, res) => {
     const username = req.body.username;
     const user = await users.findOne({ username });
     console.log("user : ", user);
-    if(user){
+    if (user) {
       return res
-      .status(200)
-      .json({ balance : user.balance});
+        .status(200)
+        .json({ balance: user.balance });
     }
   } catch (error) {
     console.error("Get user error:", error);
@@ -184,17 +184,28 @@ const getBalance = async (req, res) => {
 //  NEEDS WORK
 const updateBalance = async (req, res) => {
   try {
-    console.log("Step 3: connecting to DB...");
     const db = await connectToDB();
     console.log("Step 4: connected to DB");
 
     const users = db.collection("users");
-
+    const username = req.body.username;
+    const newAmount = req.body.balance;
     const user = await users.findOne({ username });
-    if(user){
+    console.log("user : ", user);
+    if (user) {
+      //  user found now lets change the balance with the changingAmount sent in
+      //  num gets added so positive is + negative is -
+      //  get balance from database
+      //  do math
+      await users.updateOne(
+        { username: username },
+        { $set: { balance: newAmount } }
+      );
+
+
       return res
-      .status(400)
-      .json({ user : user});
+        .status(200)
+        .json({ balance: user.balance });
     }
   } catch (error) {
     console.error("Get user error:", error);
@@ -202,5 +213,51 @@ const updateBalance = async (req, res) => {
   }
 }
 
+const buyAsset = async (req, res) => {
+  try {
+    const db = await connectToDB();
+    const users = db.collection("users");
 
-module.exports = { loginUser, signupUser, getBalance, updateBalance, clearCookies };
+    const { username, ticker, amount } = req.body;
+    const amt = parseInt(amount, 10);
+
+    // 1. Find user
+    const user = await users.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // 2. Ensure positions object exists (if missing, set it once)
+    if (!user.positions) {
+      await users.updateOne(
+        { _id: user._id },
+        { $set: { positions: {} } }
+      );
+    }
+
+    // 3. Ensure ticker entry exists (if missing, set it once)
+    await users.updateOne(
+      { _id: user._id, [`positions.${ticker}`]: { $exists: false } },
+      { $set: { [`positions.${ticker}`]: { shares: 0, contracts: [] } } }
+    );
+
+    // 4. Increment shares
+    await users.updateOne(
+      { _id: user._id },
+      { $inc: { [`positions.${ticker}.shares`]: amt } }
+    );
+
+    // 5. Re-fetch updated user
+    const updatedUser = await users.findOne({ username });
+
+    return res
+      .status(200)
+      .json({ balance: updatedUser.balance, positions: updatedUser.positions });
+  } catch (error) {
+    console.error("Buy asset error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+
+module.exports = { loginUser, signupUser, getBalance, updateBalance, buyAsset, clearCookies };

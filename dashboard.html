@@ -347,18 +347,52 @@
                 const data = await response.json();
                 allStocksCache = data;
                 console.log("All stocks loaded:", data.length, "stocks");
-                cashBalance = getUserBalance() / 2;
-                const balanceElement = document.getElementById("cashBalance");
-                balanceElement.textContent = `$${cashBalance.toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                })}`;
-                console.log(cashBalance)
+                setCashBalance();
                 return data;
             } catch (error) {
                 console.error("Error fetching all stocks:", error);
                 return [];
             }
+        }
+
+        async function setCashBalance() {
+            console.log("setting cash balance");
+            cashBalance = await getUserBalance();
+            const balanceElement = document.getElementById("cashBalance");
+            balanceElement.textContent = `${cashBalance}`;
+            console.log(cashBalance);
+        }
+
+        async function changeCashBalance(changeAmount) {
+            console.log("changing cash balance by", changeAmount);
+            console.log("current balance", cashBalance);
+            const username = getCookie("username");
+            try {
+                const cashBalance = await getUserBalance();
+
+                if (cashBalance - changeAmount < 0) {
+                    throw new Error("Insufficient funds"); // ✅ throw a proper Error
+                }
+            } catch (err) {
+                console.error("Balance check failed:", err.message);
+            }
+            const newCashBalance = cashBalance - changeAmount;
+
+            try {
+                const response = await fetch(`${url}/users/updateBalance`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ username: username, balance: newCashBalance }),
+                    credentials: "include",
+                });
+            }
+            catch (err) {
+                console.error("Database error", err.message);
+            }
+            //  after its changed the balance on the screen need to be updated
+            setCashBalance();
         }
 
         // Fetch individual stock data
@@ -532,7 +566,7 @@
                 }
                 const apiData = await response.json();
                 console.log("apiData", apiData);
-                if(apiData){
+                if (apiData) {
                     return apiData.balance;
                 }
 
@@ -544,215 +578,241 @@
         }
         // Update stock display with API data
         async function updateStockDisplay(symbol) {
-                // Show loading state
-                document.getElementById('stockSymbol').textContent = symbol;
-                document.getElementById('stockPrice').textContent = 'Loading...';
-                document.getElementById('stockChange').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
-                document.getElementById('stockOpen').textContent = '--';
-                document.getElementById('stockHigh').textContent = '--';
-                document.getElementById('stockLow').textContent = '--';
-                document.getElementById('stockVolume').textContent = '--';
+            // Show loading state
+            document.getElementById('stockSymbol').textContent = symbol;
+            document.getElementById('stockPrice').textContent = 'Loading...';
+            document.getElementById('stockChange').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+            document.getElementById('stockOpen').textContent = '--';
+            document.getElementById('stockHigh').textContent = '--';
+            document.getElementById('stockLow').textContent = '--';
+            document.getElementById('stockVolume').textContent = '--';
 
-                const logoImg = document.getElementById('stockLogo');
-                logoImg.style.display = 'none';
+            const logoImg = document.getElementById('stockLogo');
+            logoImg.style.display = 'none';
 
-                // Fetch data from API
-                const stockData = await fetchStockData(symbol);
+            // Fetch data from API
+            const stockData = await fetchStockData(symbol);
 
-                if (!stockData) {
-                    document.getElementById('stockPrice').textContent = 'Error';
-                    document.getElementById('stockChange').innerHTML = '<i class="fas fa-exclamation-triangle"></i> Failed to load';
-                    return;
-                }
-
-                currentStock = symbol;
-                currentStockData = stockData;
-
-                // Update display with real data
-                document.getElementById('stockSymbol').textContent = `${stockData.symbol}`;
-                document.getElementById('stockPrice').textContent = `$${stockData.price.toFixed(2)}`;
-
-                // Update additional stock info
-                document.getElementById('stockOpen').textContent = `$${stockData.open.toFixed(2)}`;
-                document.getElementById('stockHigh').textContent = `$${stockData.high.toFixed(2)}`;
-                document.getElementById('stockLow').textContent = `$${stockData.low.toFixed(2)}`;
-                document.getElementById('stockVolume').textContent = stockData.volume.toLocaleString();
-
-                // Show logo if available
-                if (stockData.logo) {
-                    logoImg.src = stockData.logo;
-                    logoImg.alt = stockData.name;
-                    logoImg.style.display = 'inline-block';
-                    logoImg.onerror = function () {
-                        this.style.display = 'none';
-                    };
-                }
-
-                const changeElement = document.getElementById('stockChange');
-                const change = stockData.change || 0;
-                const changePercent = stockData.changePercent || 0;
-                const isPositive = change >= 0;
-
-                changeElement.className = isPositive ? 'price-positive' : 'price-negative';
-                changeElement.innerHTML = `<i class="fas fa-arrow-${isPositive ? 'up' : 'down'}"></i> ${isPositive ? '+' : ''}$${Math.abs(change).toFixed(2)} (${isPositive ? '+' : ''}${changePercent.toFixed(2)}%)`;
-
-                // Update chart with historical data
-                if (stockData.historicalData && chart) {
-                    chart.data.datasets[0].label = `${stockData.symbol} Price`;
-                    chart.data.datasets[0].data = stockData.historicalData;
-                    chart.data.datasets[0].borderColor = isPositive ? '#00d4aa' : '#ff4757';
-                    chart.data.datasets[0].backgroundColor = isPositive ? 'rgba(0, 212, 170, 0.1)' : 'rgba(255, 71, 87, 0.1)';
-
-                    if (stockData.timeLabels) {
-                        chart.data.labels = stockData.timeLabels;
-                    }
-
-                    chart.update();
-                }
-
-                updateOrderSummary();
+            if (!stockData) {
+                document.getElementById('stockPrice').textContent = 'Error';
+                document.getElementById('stockChange').innerHTML = '<i class="fas fa-exclamation-triangle"></i> Failed to load';
+                return;
             }
 
-            // Update order summary
-            function updateOrderSummary() {
-                if (!currentStockData) return;
+            currentStock = symbol;
+            currentStockData = stockData;
 
-                const quantity = parseInt(document.getElementById('quantity').value) || 0;
-                const orderType = document.getElementById('orderType').value;
+            // Update display with real data
+            document.getElementById('stockSymbol').textContent = `${stockData.symbol}`;
+            document.getElementById('stockPrice').textContent = `$${stockData.price.toFixed(2)}`;
 
-                let price = currentStockData.price;
-                if (orderType === 'limit') {
-                    const limitPrice = parseFloat(document.getElementById('limitPrice').value);
-                    if (limitPrice > 0) price = limitPrice;
-                }
+            // Update additional stock info
+            document.getElementById('stockOpen').textContent = `$${stockData.open.toFixed(2)}`;
+            document.getElementById('stockHigh').textContent = `$${stockData.high.toFixed(2)}`;
+            document.getElementById('stockLow').textContent = `$${stockData.low.toFixed(2)}`;
+            document.getElementById('stockVolume').textContent = stockData.volume.toLocaleString();
 
-                const total = price * quantity;
-
-                document.getElementById('pricePerShare').textContent = `$${price.toFixed(2)}`;
-                document.getElementById('orderQuantity').textContent = quantity;
-                document.getElementById('totalCost').textContent = `$${total.toFixed(2)}`;
+            // Show logo if available
+            if (stockData.logo) {
+                logoImg.src = stockData.logo;
+                logoImg.alt = stockData.name;
+                logoImg.style.display = 'inline-block';
+                logoImg.onerror = function () {
+                    this.style.display = 'none';
+                };
             }
 
-            // Search functionality with API integration
-            function setupSearch() {
-                const searchInput = document.getElementById('stockSearch');
-                const suggestionsDiv = document.getElementById('suggestions');
+            const changeElement = document.getElementById('stockChange');
+            const change = stockData.change || 0;
+            const changePercent = stockData.changePercent || 0;
+            const isPositive = change >= 0;
 
-                searchInput.addEventListener('input', function () {
-                    const query = this.value.toUpperCase().trim();
-                    suggestionsDiv.innerHTML = '';
+            changeElement.className = isPositive ? 'price-positive' : 'price-negative';
+            changeElement.innerHTML = `<i class="fas fa-arrow-${isPositive ? 'up' : 'down'}"></i> ${isPositive ? '+' : ''}$${Math.abs(change).toFixed(2)} (${isPositive ? '+' : ''}${changePercent.toFixed(2)}%)`;
 
-                    if (query.length > 0) {
-                        // Filter from all stocks cache
-                        const matches = allStocksCache.filter(stock =>
-                            stock.ticker.includes(query) ||
-                            stock.name.toUpperCase().includes(query)
-                        ).slice(0, 10); // Limit to 10 suggestions
+            // Update chart with historical data
+            if (stockData.historicalData && chart) {
+                chart.data.datasets[0].label = `${stockData.symbol} Price`;
+                chart.data.datasets[0].data = stockData.historicalData;
+                chart.data.datasets[0].borderColor = isPositive ? '#00d4aa' : '#ff4757';
+                chart.data.datasets[0].backgroundColor = isPositive ? 'rgba(0, 212, 170, 0.1)' : 'rgba(255, 71, 87, 0.1)';
 
-                        if (matches.length > 0) {
-                            matches.forEach(stock => {
-                                const div = document.createElement('div');
-                                div.className = 'suggestion-item';
-                                div.innerHTML = `<strong>${stock.ticker}</strong> - ${stock.name}`;
-                                div.onclick = () => {
-                                    searchInput.value = `${stock.ticker} - ${stock.name}`;
-                                    updateStockDisplay(stock.ticker);
-                                    suggestionsDiv.style.display = 'none';
-                                };
-                                suggestionsDiv.appendChild(div);
-                            });
-                            suggestionsDiv.style.display = 'block';
-                        } else {
-                            // If no matches found, allow user to search anyway
+                if (stockData.timeLabels) {
+                    chart.data.labels = stockData.timeLabels;
+                }
+
+                chart.update();
+            }
+
+            updateOrderSummary();
+        }
+
+        // Update order summary
+        function updateOrderSummary() {
+            if (!currentStockData) return;
+
+            const quantity = parseInt(document.getElementById('quantity').value) || 0;
+            const orderType = document.getElementById('orderType').value;
+
+            let price = currentStockData.price;
+            if (orderType === 'limit') {
+                const limitPrice = parseFloat(document.getElementById('limitPrice').value);
+                if (limitPrice > 0) price = limitPrice;
+            }
+
+            const total = price * quantity;
+
+            document.getElementById('pricePerShare').textContent = `$${price.toFixed(2)}`;
+            document.getElementById('orderQuantity').textContent = quantity;
+            document.getElementById('totalCost').textContent = `$${total.toFixed(2)}`;
+        }
+
+        // Search functionality with API integration
+        function setupSearch() {
+            const searchInput = document.getElementById('stockSearch');
+            const suggestionsDiv = document.getElementById('suggestions');
+
+            searchInput.addEventListener('input', function () {
+                const query = this.value.toUpperCase().trim();
+                suggestionsDiv.innerHTML = '';
+
+                if (query.length > 0) {
+                    // Filter from all stocks cache
+                    const matches = allStocksCache.filter(stock =>
+                        stock.ticker.includes(query) ||
+                        stock.name.toUpperCase().includes(query)
+                    ).slice(0, 10); // Limit to 10 suggestions
+
+                    if (matches.length > 0) {
+                        matches.forEach(stock => {
                             const div = document.createElement('div');
                             div.className = 'suggestion-item';
-                            div.innerHTML = `<i class="fas fa-search"></i> Search for "${query}"`;
+                            div.innerHTML = `<strong>${stock.ticker}</strong> - ${stock.name}`;
                             div.onclick = () => {
-                                searchInput.value = query;
-                                updateStockDisplay(query);
+                                searchInput.value = `${stock.ticker} - ${stock.name}`;
+                                updateStockDisplay(stock.ticker);
                                 suggestionsDiv.style.display = 'none';
                             };
                             suggestionsDiv.appendChild(div);
-                            suggestionsDiv.style.display = 'block';
-                        }
+                        });
+                        suggestionsDiv.style.display = 'block';
                     } else {
-                        suggestionsDiv.style.display = 'none';
-                    }
-                });
-
-                // Handle Enter key
-                searchInput.addEventListener('keypress', function (e) {
-                    if (e.key === 'Enter') {
-                        const ticker = this.value.split(' - ')[0].toUpperCase().trim();
-                        if (ticker) {
-                            updateStockDisplay(ticker);
+                        // If no matches found, allow user to search anyway
+                        const div = document.createElement('div');
+                        div.className = 'suggestion-item';
+                        div.innerHTML = `<i class="fas fa-search"></i> Search for "${query}"`;
+                        div.onclick = () => {
+                            searchInput.value = query;
+                            updateStockDisplay(query);
                             suggestionsDiv.style.display = 'none';
-                        }
-                    }
-                });
-
-                // Hide suggestions when clicking outside
-                document.addEventListener('click', function (e) {
-                    if (!searchInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
-                        suggestionsDiv.style.display = 'none';
-                    }
-                });
-            }
-
-            // Order type change handler
-            document.getElementById('orderType').addEventListener('change', function () {
-                const limitPriceDiv = document.getElementById('limitPriceDiv');
-                if (this.value === 'limit') {
-                    limitPriceDiv.style.display = 'block';
-                    if (currentStockData) {
-                        document.getElementById('limitPrice').value = currentStockData.price.toFixed(2);
+                        };
+                        suggestionsDiv.appendChild(div);
+                        suggestionsDiv.style.display = 'block';
                     }
                 } else {
-                    limitPriceDiv.style.display = 'none';
+                    suggestionsDiv.style.display = 'none';
                 }
-                updateOrderSummary();
             });
 
-            // Quantity change handler
-            document.getElementById('quantity').addEventListener('input', updateOrderSummary);
-            document.getElementById('limitPrice').addEventListener('input', updateOrderSummary);
+            // Handle Enter key
+            searchInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    const ticker = this.value.split(' - ')[0].toUpperCase().trim();
+                    if (ticker) {
+                        updateStockDisplay(ticker);
+                        suggestionsDiv.style.display = 'none';
+                    }
+                }
+            });
 
-            // Execute trade
-            function executeTrade(action) {
-                if (!currentStockData) {
-                    showWarningAlert('Please select a stock first');
+            // Hide suggestions when clicking outside
+            document.addEventListener('click', function (e) {
+                if (!searchInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
+                    suggestionsDiv.style.display = 'none';
+                }
+            });
+        }
+
+        // Order type change handler
+        document.getElementById('orderType').addEventListener('change', function () {
+            const limitPriceDiv = document.getElementById('limitPriceDiv');
+            if (this.value === 'limit') {
+                limitPriceDiv.style.display = 'block';
+                if (currentStockData) {
+                    document.getElementById('limitPrice').value = currentStockData.price.toFixed(2);
+                }
+            } else {
+                limitPriceDiv.style.display = 'none';
+            }
+            updateOrderSummary();
+        });
+
+        // Quantity change handler
+        document.getElementById('quantity').addEventListener('input', updateOrderSummary);
+        document.getElementById('limitPrice').addEventListener('input', updateOrderSummary);
+
+        // Execute trade
+        async function executeTrade(action) {
+            if (!currentStockData) {
+                showWarningAlert('Please select a stock first');
+                return;
+            }
+
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const totalCost = parseFloat(document.getElementById('totalCost').textContent.replace('$', ''));
+            const ticker = currentStockData.symbol;
+            const username = getCookie("username");
+            console.log("username", username);
+            console.log("ticker", ticker);
+            console.log("quantity", quantity);
+
+            if (action === 'buy') {
+                if (totalCost > cashBalance) {
+                    showWarningAlert('Insufficient funds!');
                     return;
                 }
-
-                const quantity = parseInt(document.getElementById('quantity').value);
-                const totalCost = parseFloat(document.getElementById('totalCost').textContent.replace('$', ''));
-
-                if (action === 'buy') {
-                    if (totalCost > cashBalance) {
-                        showWarningAlert('Insufficient funds!');
-                        return;
+                //  try to make change on database
+                //  /buyAsset
+                else{
+                    changeCashBalance(totalCost);
+                    try {
+                    const response = await fetch(`${url}/users/buyAsset`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ username: username, ticker: ticker, amount: quantity }),
+                        credentials: "include",
+                    });
+                        cashBalance -= totalCost;
                     }
-                    cashBalance -= totalCost;
-                    showSuccessAlert(`Successfully bought ${quantity} shares of ${currentStock} for $${totalCost.toFixed(2)}`);
-                } else {
-                    cashBalance += totalCost;
-                    showSuccessAlert(`Successfully sold ${quantity} shares of ${currentStock} for $${totalCost.toFixed(2)}`);
-                }
+                    catch(err){
 
-                document.getElementById('cashBalance').textContent = `$${cashBalance.toFixed(2)}`;
+                    }
+                }
+                // make call to make cash change on database;
+                
+                showSuccessAlert(`Successfully bought ${quantity} shares of ${currentStock} for $${totalCost.toFixed(2)}`);
+            } else {
+                //  try to make change on database  
+                // cashBalance += totalCost;
+                // showSuccessAlert(`Successfully sold ${quantity} shares of ${currentStock} for $${totalCost.toFixed(2)}`);
             }
 
-            // Initialize everything
-            window.addEventListener('load', async function () {
-                initChart();
-                setupSearch();
+            document.getElementById('cashBalance').textContent = `$${cashBalance.toFixed(2)}`;
+        }
 
-                // Load all stocks for search functionality
-                await fetchAllStocks();
+        // Initialize everything
+        window.addEventListener('load', async function () {
+            initChart();
+            setupSearch();
 
-                // Load initial stock (META as example)
-                updateStockDisplay('META');
-            });
+            // Load all stocks for search functionality
+            await fetchAllStocks();
+
+            // Load initial stock (META as example)
+            updateStockDisplay('META');
+        });
     </script>
 </body>
 
