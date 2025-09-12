@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>An Investor (AI) — Portfolio</title>
+  <meta name="description" content="Compact portfolio dashboard for holdings, positions, cash, and P/L — dark teal theme." />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0e1116;            /* page background */
+      --panel: #12161d;         /* panel background */
+      --card: #0f141a;          /* card background */
+      --elev: #0b0f14;          /* elevated/hover */
+      --border: #1d2a36;        /* borders */
+      --text: #e6f0f2;          /* primary text */
+      --muted: #b8c7cc;         /* secondary text */
+      --brand: #00b3b3;         /* teal */
+      --brand-2: #3ec7a7;       /* green‑teal */
+      --brand-3: #3da8f5;       /* blue */
+      --danger: #ff5f73;
+      --warn: #ffcc66;
+      --good: #57d69a;
+      --shadow: 0 10px 30px rgba(0,0,0,.45);
+      --radius: 16px;
+      --radius-sm: 12px;
+      --radius-lg: 22px;
+      --maxw: 1380px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+      background: radial-gradient(1200px 600px at 10% -10%, rgba(61,168,245,0.08), transparent),
+                  radial-gradient(800px 500px at 90% 10%, rgba(0,179,179,0.08), transparent),
+                  var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+
+    a { color: var(--brand-3); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Topbar */
+    .topbar { position: sticky; top: 0; z-index: 1000; backdrop-filter: saturate(130%) blur(10px); background: linear-gradient(180deg, rgba(5,8,12,0.85), rgba(5,8,12,0.65)); border-bottom: 1px solid var(--border); }
+    .topbar-inner { margin: 0 auto; max-width: var(--maxw); padding: 14px 20px; display: flex; align-items: center; gap: 12px; }
+    .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: .3px; }
+    .logo img { height: 40px; width: auto; margin-right: 6px; }
+
+    .back-arrow { display: flex; align-items: center; justify-content: center; margin-right: 8px; padding: 6px; border-radius: 50%; background: rgba(255,255,255,0.15); transition: background .2s ease; }
+    .back-arrow:hover { background: rgba(255,255,255,0.25); }
+
+    /* Layout */
+    .wrap { max-width: var(--maxw); margin: 22px auto 40px; padding: 0 20px; }
+
+    /* Summary row */
+    .summary { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+    .kpi { grid-column: span 3; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); min-width: 0; }
+    .kpi h4 { margin: 0 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+    .kpi .v { font-size: 26px; font-weight: 800; }
+    .kpi .d { font-size: 12px; color: var(--muted); }
+    .kpi .pos { color: var(--good); }
+    .kpi .neg { color: var(--danger); }
+
+    .alloc-card { grid-column: span 4; display: grid; grid-template-columns: 1fr; align-items: center; }
+    .spark-card { grid-column: span 8; }
+
+    /* Panels */
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .panel h3 { margin: 0; font-size: 16px; padding: 14px 16px; border-bottom: 1px solid var(--border); color: var(--muted); }
+    .panel .body { padding: 10px 14px 14px; }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; }
+    thead th { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); background: #0d131a; }
+    th, td { text-align: left; padding: 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    tbody tr:hover { background: #0c1117; }
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .pos { color: var(--good); }
+    .neg { color: var(--danger); }
+
+    /* Grid below */
+    .grid { display: grid; grid-template-columns: 1.3fr .7fr; gap: 14px; margin-top: 14px; }
+
+    /* CTA button (Trading Dashboard) */
+    .right { margin-left: auto; }
+
+    .trade-btn {
+    margin-left: auto;
+    display: inline-flex; align-items: center; gap: 8px;
+    background: linear-gradient(135deg, var(--good), #7ff0c0);
+    color: #042217; text-decoration: none; font-weight: 700;
+    padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: var(--shadow);
+    transition: transform .05s ease, filter .2s ease;
+    }
+    .trade-btn:hover { filter: brightness(1.05); }
+    .trade-btn:active { transform: translateY(1px); }
+
+
+    /* Footer note */
+    .disclaimer { margin-top: 14px; color: var(--muted); font-size: 12px; }
+
+    /* Portfolio: widen holdings + options full-bleed centered (no markup change) */
+    .grid:has(#holdingsTable) {
+    grid-template-columns: 1fr;                         /* stack vertically */
+    width: min(1600px, 90vw);                           /* almost full width, capped */
+    margin-left: calc(50% - min(800px, 45vw));          /* center across viewport */
+    margin-right: calc(50% - min(800px, 45vw));
+    padding: 0 20px;                                    /* slight side padding */
+    }
+    /* Responsive: keep desktop tight; only stack when needed */
+    @media (max-width: 1000px) {
+      .summary .kpi { grid-column: span 6; }
+      .alloc-card { grid-column: span 6; }
+      .spark-card { grid-column: span 6; }
+      .grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 680px) {
+      .summary .kpi { grid-column: 1 / -1; }
+      .alloc-card, .spark-card { grid-column: 1 / -1; }
+      .topbar-inner { flex-wrap: wrap; }
+      .logo span { font-size: 14px; }
+      .panel .body { padding: 8px; }
+      table { display: block; overflow-x: auto; }
+    }
+    /* === Header spacing + back arrow circle fix === */
+    .topbar-inner{ max-width: min(1600px, 90vw); gap:10px; }
+    .back-arrow{ width:36px; height:36px; padding:0; }
+    .back-arrow svg{ width:18px; height:18px; }
+    .logo img{ margin-right:10px; }
+  </style>
+</head>
+<body>
+    <header class="topbar">
+    <div class="topbar-inner">
+        <a href="index.html" class="back-arrow" title="Back to Home">
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none">
+            <path d="M19 12H5M12 5l-7 7 7 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        </a>
+        <div class="logo" aria-label="An Investor (AI)">
+        <img src="../AnInvestorLogo.png" alt="An Investor (AI) Logo" />
+        <span>Portfolio</span>
+        </div>
+        <!-- INSERT THE BUTTON BELOW -->
+        <a href="TradingDashboard.html" class="trade-btn right" title="Open Trading Dashboard">
+        Make Trades
+        </a>
+    </div>
+    </header>
+
+  <div class="wrap">
+    <!-- SUMMARY ROW -->
+    <div class="summary">
+      <div class="kpi">
+        <h4>Net Account Value</h4>
+        <div class="v" id="k_account">—</div>
+        <div class="d">Total P/L: <span id="k_total_pl">—</span></div>
+      </div>
+      <div class="kpi">
+        <h4>Cash</h4>
+        <div class="v" id="k_cash">—</div>
+        <div class="d">Buying Power: <strong id="k_bp">—</strong></div>
+      </div>
+      <div class="kpi">
+        <h4>Today's P/L</h4>
+        <div class="v" id="k_day_pl">—</div>
+        <div class="d">Realized: <span id="k_day_real">—</span> · Unrealized: <span id="k_day_unreal">—</span></div>
+      </div>
+      <div class="kpi alloc-card panel">
+        <h3>Allocation</h3>
+        <div class="body">
+          <canvas id="allocChart" height="120" aria-label="Allocation Donut"></canvas>
+        </div>
+      </div>
+      <div class="kpi spark-card panel">
+        <h3>Equity Curve (30d)</h3>
+        <div class="body">
+          <canvas id="equityChart" height="120" aria-label="Equity Sparkline"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN GRID: HOLDINGS + SIDECARD -->
+    <div class="grid">
+      <div class="panel">
+        <h3>Holdings</h3>
+        <div class="body">
+          <table id="holdingsTable">
+            <thead>
+              <tr>
+                <th>Ticker</th>
+                <th>Name</th>
+                <th class="num">Qty</th>
+                <th class="num">Avg Cost</th>
+                <th class="num">Price</th>
+                <th class="num">Market Value</th>
+                <th class="num">Day P/L</th>
+                <th class="num">Total P/L</th>
+                <th class="num">Alloc %</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+              <tr>
+                <th colspan="5" class="num">Totals</th>
+                <th class="num" id="t_mv">—</th>
+                <th class="num" id="t_day">—</th>
+                <th class="num" id="t_tot">—</th>
+                <th class="num" id="t_alloc">100%</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Open Option Positions</h3>
+        <div class="body">
+          <table id="optionsTable">
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>Contract</th>
+                <th class="num">Qty</th>
+                <th class="num">Mark</th>
+                <th class="num">Cost</th>
+                <th class="num">Day P/L</th>
+                <th class="num">Total P/L</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <div class="disclaimer">Mock data for demonstration. Options P/L ignores fees and assignment.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script>
+    // ===== Mock user data =====
+    const mock = {
+      account: {
+        equity: 125432.18,
+        cash: 18250.00,
+        buyingPower: 75000.00,
+        day: { pl: 1245.67, realized: 320.00, unrealized: 925.67 },
+        totalPL: 13785.50
+      },
+      holdings: [
+        { ticker: 'AAPL', name: 'Apple Inc.', qty: 120, avg: 162.40, price: 170.25, dayPct: 1.12 },
+        { ticker: 'MSFT', name: 'Microsoft Corp.', qty: 50, avg: 384.10, price: 392.60, dayPct: 0.85 },
+        { ticker: 'NVDA', name: 'NVIDIA Corp.', qty: 30, avg: 780.00, price: 820.40, dayPct: 1.95 },
+        { ticker: 'TSLA', name: 'Tesla Inc.', qty: 10, avg: 240.00, price: 228.50, dayPct: -0.70 },
+        { ticker: 'SPY',  name: 'SPDR S&P 500 ETF', qty: 20, avg: 510.00, price: 519.85, dayPct: 0.40 },
+      ],
+      options: [
+        { symbol: 'AAPL', contract: 'AAPL 01/17/2026 180C', qty: 1, mark: 4.20, cost: 3.50, dayPL: 45.00, totalPL: 70.00 },
+        { symbol: 'MSFT', contract: 'MSFT 12/19/2025 380P', qty: -1, mark: 6.10, cost: 7.20, dayPL: 30.00, totalPL: 110.00 }
+      ],
+      equitySeries: (function(){
+        // build a subtle 30-day curve around account equity
+        const arr = []; let base = 120000; for(let i=0;i<30;i++){ base += (Math.random()-0.45)*800; arr.push(Math.max(110000, base)); } return arr;
+      })()
+    };
+
+    const fmt = (n, p=2) => new Intl.NumberFormat(undefined, {minimumFractionDigits: p, maximumFractionDigits: p}).format(n);
+    const el = id => document.getElementById(id);
+
+    // ===== KPIs =====
+    function renderKPIs(){
+      el('k_account').textContent = '$' + fmt(mock.account.equity);
+      const plTot = mock.account.totalPL;
+      el('k_total_pl').innerHTML = `<span class="${plTot>=0?'pos':'neg'}">$${fmt(plTot)}</span>`;
+      el('k_cash').textContent = '$' + fmt(mock.account.cash);
+      el('k_bp').textContent = '$' + fmt(mock.account.buyingPower);
+      const d = mock.account.day;
+      el('k_day_pl').innerHTML = `<span class="${d.pl>=0?'pos':'neg'}">$${fmt(d.pl)} (${fmt(d.pl/mock.account.equity*100,2)}%)</span>`;
+      el('k_day_real').textContent = '$' + fmt(d.realized);
+      el('k_day_unreal').textContent = '$' + fmt(d.unrealized);
+    }
+
+    // ===== Holdings Table =====
+    function renderHoldings(){
+      const tbody = document.querySelector('#holdingsTable tbody');
+      tbody.innerHTML = '';
+      let totalMV = 0, totalDay = 0, totalPL = 0;
+      // Compute MV, day PL, total PL
+      const rows = mock.holdings.map(h => {
+        const mv = h.qty * h.price;
+        const cost = h.qty * h.avg;
+        const totPL = mv - cost;
+        const dayPL = mv * (h.dayPct/100);
+        totalMV += mv; totalDay += dayPL; totalPL += totPL;
+        return { ...h, mv, totPL, dayPL };
+      });
+
+      // Allocation based on MV
+      rows.forEach(r => r.alloc = r.mv / totalMV * 100);
+
+      for(const r of rows){
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${r.ticker}</strong></td>
+          <td>${r.name}</td>
+          <td class="num">${fmt(r.qty,0)}</td>
+          <td class="num">$${fmt(r.avg)}</td>
+          <td class="num">$${fmt(r.price)}</td>
+          <td class="num">$${fmt(r.mv)}</td>
+          <td class="num ${r.dayPL>=0?'pos':'neg'}">$${fmt(r.dayPL)} (${fmt(r.dayPct,2)}%)</td>
+          <td class="num ${r.totPL>=0?'pos':'neg'}">$${fmt(r.totPL)}</td>
+          <td class="num">${fmt(r.alloc,1)}%</td>
+        `;
+        tbody.appendChild(tr);
+      }
+
+      el('t_mv').textContent = '$' + fmt(totalMV);
+      el('t_day').innerHTML = `<span class="${totalDay>=0?'pos':'neg'}">$${fmt(totalDay)}</span>`;
+      el('t_tot').innerHTML = `<span class="${totalPL>=0?'pos':'neg'}">$${fmt(totalPL)}</span>`;
+
+      return rows;
+    }
+
+    // ===== Options Table =====
+    function renderOptions(){
+      const tbody = document.querySelector('#optionsTable tbody');
+      tbody.innerHTML = '';
+      for(const p of mock.options){
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${p.symbol}</strong></td>
+          <td>${p.contract}</td>
+          <td class="num">${p.qty}</td>
+          <td class="num">$${fmt(p.mark)}</td>
+          <td class="num">$${fmt(p.cost)}</td>
+          <td class="num ${p.dayPL>=0?'pos':'neg'}">$${fmt(p.dayPL)}</td>
+          <td class="num ${p.totalPL>=0?'pos':'neg'}">$${fmt(p.totalPL)}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+    }
+
+    // ===== Charts =====
+    function makeAllocationChart(rows){
+      const ctx = document.getElementById('allocChart');
+      const labels = rows.map(r => r.ticker);
+      const data = rows.map(r => r.alloc);
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels,
+          datasets: [{
+            data,
+            borderWidth: 0,
+            hoverOffset: 4,
+            backgroundColor: [
+              'rgba(0,179,179,.8)', 'rgba(61,168,245,.8)', 'rgba(62,199,167,.8)',
+              'rgba(0,179,179,.55)', 'rgba(61,168,245,.55)'
+            ]
+          }]
+        },
+        options: {
+          plugins: { legend: { display: true, position: 'bottom', labels: { color: '#b8c7cc' } } },
+          cutout: '62%',
+        }
+      });
+    }
+
+    function makeEquityChart(){
+      const ctx = document.getElementById('equityChart');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: Array.from({length: mock.equitySeries.length}, (_,i)=> i+1),
+          datasets: [{
+            data: mock.equitySeries,
+            borderWidth: 2,
+            pointRadius: 0,
+            tension: 0.35,
+            borderColor: 'rgba(61,168,245,.9)',
+            fill: true,
+            backgroundColor: 'rgba(61,168,245,.12)'
+          }]
+        },
+        options: {
+          scales: {
+            x: { display: false, grid: { display: false } },
+            y: { display: false, grid: { display: false } }
+          },
+          plugins: { legend: { display: false }, tooltip: { enabled: true } },
+          elements: { line: { capBezierPoints: true } }
+        }
+      });
+    }
+
+    // ===== Boot =====
+    renderKPIs();
+    const rows = renderHoldings();
+    renderOptions();
+    makeAllocationChart(rows);
+    makeEquityChart();
+  </script>
+</body>
+</html>
