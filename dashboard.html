@@ -774,7 +774,7 @@
                 //  try to make change on database
                 //  /buyAsset
                 else{
-                    changeCashBalance(totalCost);
+                    
                     try {
                     const response = await fetch(`${url}/users/buyAsset`, {
                         method: "POST",
@@ -784,7 +784,7 @@
                         body: JSON.stringify({ username: username, ticker: ticker, amount: quantity }),
                         credentials: "include",
                     });
-                        cashBalance -= totalCost;
+                        changeCashBalance();
                     }
                     catch(err){
 
@@ -793,10 +793,26 @@
                 // make call to make cash change on database;
                 
                 showSuccessAlert(`Successfully bought ${quantity} shares of ${currentStock} for $${totalCost.toFixed(2)}`);
-            } else {
+            }
+             if (action === 'buy') {
                 //  try to make change on database  
-                // cashBalance += totalCost;
-                // showSuccessAlert(`Successfully sold ${quantity} shares of ${currentStock} for $${totalCost.toFixed(2)}`);
+                
+                
+                    try {
+                    const response = await fetch(`${url}/users/buyAsset`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ username: username, ticker: ticker, amount: quantity }),
+                        credentials: "include",
+                    });
+                        setCashBalance();
+                    }
+                    catch(err){
+
+                    }
+                showSuccessAlert(`Successfully sold ${quantity} shares of ${currentStock} for $${totalCost.toFixed(2)}`);
             }
 
             document.getElementById('cashBalance').textContent = `$${cashBalance.toFixed(2)}`;
