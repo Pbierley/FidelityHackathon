@@ -34,6 +34,16 @@ async function fetchPolygonQuote(ticker){
   return response.data.results;
 }
 
+//  This will take a given ticker and return options data
+async function fetchOptions(ticker){
+  const apiKey = process.env.VITE_POLYGON_API_KEY;
+
+  const url = `https://api.polygon.io/v3/reference/options/contracts?underlying_ticker=${ticker}&limit=50&apiKey=${apiKey}`;
+  const response = await axios.get(url);
+  //  console.log("Polygon response.data", response.data.results);
+  return response.data.results;
+}
+
 // GET /api/stocks — return all stock entries from DB
 const getStockPrices = async (req, res) => {
   try {
@@ -106,5 +116,7 @@ const getStock = async (req, res) => {
     return res.status(500).json({ error: "Internal server error." });
   }
 };
+
+
 
 module.exports = { getStockPrices, getStock };
