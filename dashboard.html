@@ -1,20 +1,510 @@
-<!-- public/dashboard.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Dashboard</title>
-  <link rel="stylesheet" href="/styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradePro - Trading Platform</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #0a0e1a;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            background-color: #1a1f2e !important;
+            border-bottom: 1px solid #2d3748;
+        }
+        
+        .navbar-brand {
+            color: #00d4aa !important;
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        
+        .search-container {
+            background: #1a1f2e;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #2d3748;
+        }
+        
+        .search-input {
+            background: #2d3748;
+            border: 1px solid #4a5568;
+            color: #ffffff;
+            border-radius: 6px;
+        }
+        
+        .search-input:focus {
+            background: #2d3748;
+            border-color: #00d4aa;
+            box-shadow: 0 0 0 0.2rem rgba(0, 212, 170, 0.25);
+            color: #ffffff;
+        }
+        
+        .chart-container {
+            background: #1a1f2e;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #2d3748;
+            height: 500px;
+        }
+        
+        .trading-panel {
+            background: #1a1f2e;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #2d3748;
+            height: 500px;
+        }
+        
+        .stock-info {
+            background: #0f1419;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 4px solid #00d4aa;
+        }
+        
+        .price-positive {
+            color: #00d4aa;
+        }
+        
+        .price-negative {
+            color: #ff4757;
+        }
+        
+        .btn-buy {
+            background: #00d4aa;
+            border: none;
+            color: #000;
+            font-weight: bold;
+            border-radius: 6px;
+            padding: 10px 20px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        .btn-buy:hover {
+            background: #00b894;
+            color: #000;
+        }
+        
+        .btn-sell {
+            background: #ff4757;
+            border: none;
+            color: #fff;
+            font-weight: bold;
+            border-radius: 6px;
+            padding: 10px 20px;
+            width: 100%;
+        }
+        
+        .btn-sell:hover {
+            background: #ff3742;
+            color: #fff;
+        }
+        
+        .form-control {
+            background: #2d3748;
+            border: 1px solid #4a5568;
+            color: #ffffff;
+            border-radius: 6px;
+        }
+        
+        .form-control:focus {
+            background: #2d3748;
+            border-color: #00d4aa;
+            box-shadow: 0 0 0 0.2rem rgba(0, 212, 170, 0.25);
+            color: #ffffff;
+        }
+        
+        .form-label {
+            color: #a0aec0;
+            font-weight: 500;
+        }
+        
+        .balance-info {
+            background: #0f1419;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .order-summary {
+            background: #0f1419;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .suggestion-item {
+            background: #2d3748;
+            border: none;
+            color: #ffffff;
+            padding: 8px 12px;
+            margin: 2px 0;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+        }
+        
+        .suggestion-item:hover {
+            background: #4a5568;
+        }
+        
+        .suggestions-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: #1a1f2e;
+            border: 1px solid #2d3748;
+            border-radius: 6px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .position-relative {
+            position: relative;
+        }
+    </style>
 </head>
 <body>
-  <h1>Welcome to your Dashboard</h1>
-  <p>This is the dashboard page.</p>
-  <button id="backHome">Go Home</button>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#"><i class="fas fa-chart-line"></i> TradePro</a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text">
+                    <i class="fas fa-user-circle"></i> Welcome, Trader
+                </span>
+            </div>
+        </div>
+    </nav>
 
-  <script>
-    document.getElementById("backHome").addEventListener("click", () => {
-      window.location.href = "/";
-    });
-  </script>
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <!-- Left Column - Search and Chart -->
+            <div class="col-lg-8">
+                <!-- Search Bar -->
+                <div class="search-container">
+                    <h5><i class="fas fa-search"></i> Stock Search</h5>
+                    <div class="position-relative">
+                        <input type="text" 
+                               class="form-control search-input" 
+                               id="stockSearch" 
+                               placeholder="Search for stocks (e.g., AAPL, GOOGL, TSLA...)">
+                        <div class="suggestions-dropdown" id="suggestions">
+                            <!-- Suggestions will be populated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart Container -->
+                <div class="chart-container">
+                    <canvas id="stockChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Right Column - Trading Panel -->
+            <div class="col-lg-4">
+                <div class="trading-panel">
+                    <!-- Stock Info -->
+                    <div class="stock-info">
+                        <h4 id="stockSymbol">AAPL</h4>
+                        <h3 id="stockPrice" class="price-positive">$150.25</h3>
+                        <p id="stockChange" class="price-positive">
+                            <i class="fas fa-arrow-up"></i> +$2.15 (+1.45%)
+                        </p>
+                    </div>
+
+                    <!-- Balance Info -->
+                    <div class="balance-info">
+                        <h6>Account Balance</h6>
+                        <h5 id="cashBalance">$10,000.00</h5>
+                        <small class="text-muted">Available for trading</small>
+                    </div>
+
+                    <!-- Trading Form -->
+                    <div class="mb-3">
+                        <label for="orderType" class="form-label">Order Type</label>
+                        <select class="form-control" id="orderType">
+                            <option value="market">Market Order</option>
+                            <option value="limit">Limit Order</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="quantity" value="1" min="1">
+                    </div>
+
+                    <div class="mb-3" id="limitPriceDiv" style="display: none;">
+                        <label for="limitPrice" class="form-label">Limit Price</label>
+                        <input type="number" class="form-control" id="limitPrice" step="0.01">
+                    </div>
+
+                    <!-- Order Summary -->
+                    <div class="order-summary">
+                        <div class="d-flex justify-content-between">
+                            <span>Price per share:</span>
+                            <span id="pricePerShare">$150.25</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Quantity:</span>
+                            <span id="orderQuantity">1</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Fees:</span>
+                            <span>$0.00</span>
+                        </div>
+                        <hr style="border-color: #2d3748;">
+                        <div class="d-flex justify-content-between">
+                            <strong>Total Cost:</strong>
+                            <strong id="totalCost">$150.25</strong>
+                        </div>
+                    </div>
+
+                    <!-- Buy/Sell Buttons -->
+                    <div class="mt-3">
+                        <button class="btn btn-buy" onclick="executeTrade('buy')">
+                            <i class="fas fa-arrow-up"></i> BUY
+                        </button>
+                        <button class="btn btn-sell" onclick="executeTrade('sell')">
+                            <i class="fas fa-arrow-down"></i> SELL
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    
+    <script>
+        // Stock data
+        const stockData = {
+            'AAPL': { 
+                name: 'Apple Inc.', 
+                price: 150.25, 
+                change: 2.15, 
+                changePercent: 1.45,
+                data: [145, 147, 149, 148, 151, 150.25, 152, 149, 148, 150.25]
+            },
+            'GOOGL': { 
+                name: 'Alphabet Inc.', 
+                price: 2500.80, 
+                change: -15.20, 
+                changePercent: -0.60,
+                data: [2520, 2515, 2510, 2505, 2500, 2495, 2490, 2495, 2500, 2500.80]
+            },
+            'TSLA': { 
+                name: 'Tesla Inc.', 
+                price: 245.67, 
+                change: 12.34, 
+                changePercent: 5.29,
+                data: [230, 235, 240, 238, 242, 245, 248, 246, 244, 245.67]
+            },
+            'MSFT': { 
+                name: 'Microsoft Corp.', 
+                price: 420.15, 
+                change: 8.90, 
+                changePercent: 2.16,
+                data: [410, 412, 415, 418, 416, 419, 421, 420, 418, 420.15]
+            },
+            'AMZN': { 
+                name: 'Amazon.com Inc.', 
+                price: 3200.45, 
+                change: -25.67, 
+                changePercent: -0.80,
+                data: [3230, 3225, 3220, 3215, 3210, 3205, 3200, 3195, 3198, 3200.45]
+            }
+        };
+
+        let currentStock = 'AAPL';
+        let chart;
+        let cashBalance = 10000.00;
+
+        // Initialize chart
+        function initChart() {
+            const ctx = document.getElementById('stockChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['9:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '1:00', '1:30', '2:00'],
+                    datasets: [{
+                        label: currentStock,
+                        data: stockData[currentStock].data,
+                        borderColor: stockData[currentStock].change >= 0 ? '#00d4aa' : '#ff4757',
+                        backgroundColor: stockData[currentStock].change >= 0 ? 'rgba(0, 212, 170, 0.1)' : 'rgba(255, 71, 87, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ffffff'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#a0aec0' },
+                            grid: { color: '#2d3748' }
+                        },
+                        y: {
+                            ticks: { color: '#a0aec0' },
+                            grid: { color: '#2d3748' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update stock display
+        function updateStockDisplay(symbol) {
+            const stock = stockData[symbol];
+            currentStock = symbol;
+            
+            document.getElementById('stockSymbol').textContent = symbol;
+            document.getElementById('stockPrice').textContent = `$${stock.price.toFixed(2)}`;
+            
+            const changeElement = document.getElementById('stockChange');
+            const isPositive = stock.change >= 0;
+            changeElement.className = isPositive ? 'price-positive' : 'price-negative';
+            changeElement.innerHTML = `<i class="fas fa-arrow-${isPositive ? 'up' : 'down'}"></i> ${isPositive ? '+' : ''}$${stock.change.toFixed(2)} (${isPositive ? '+' : ''}${stock.changePercent.toFixed(2)}%)`;
+            
+            // Update chart
+            chart.data.datasets[0].label = symbol;
+            chart.data.datasets[0].data = stock.data;
+            chart.data.datasets[0].borderColor = isPositive ? '#00d4aa' : '#ff4757';
+            chart.data.datasets[0].backgroundColor = isPositive ? 'rgba(0, 212, 170, 0.1)' : 'rgba(255, 71, 87, 0.1)';
+            chart.update();
+            
+            updateOrderSummary();
+        }
+
+        // Update order summary
+        function updateOrderSummary() {
+            const stock = stockData[currentStock];
+            const quantity = parseInt(document.getElementById('quantity').value) || 0;
+            const orderType = document.getElementById('orderType').value;
+            
+            let price = stock.price;
+            if (orderType === 'limit') {
+                const limitPrice = parseFloat(document.getElementById('limitPrice').value);
+                if (limitPrice > 0) price = limitPrice;
+            }
+            
+            const total = price * quantity;
+            
+            document.getElementById('pricePerShare').textContent = `$${price.toFixed(2)}`;
+            document.getElementById('orderQuantity').textContent = quantity;
+            document.getElementById('totalCost').textContent = `$${total.toFixed(2)}`;
+        }
+
+        // Search functionality
+        function setupSearch() {
+            const searchInput = document.getElementById('stockSearch');
+            const suggestionsDiv = document.getElementById('suggestions');
+            
+            searchInput.addEventListener('input', function() {
+                const query = this.value.toUpperCase();
+                suggestionsDiv.innerHTML = '';
+                
+                if (query.length > 0) {
+                    const matches = Object.keys(stockData).filter(symbol => 
+                        symbol.includes(query) || stockData[symbol].name.toUpperCase().includes(query)
+                    );
+                    
+                    if (matches.length > 0) {
+                        matches.forEach(symbol => {
+                            const div = document.createElement('div');
+                            div.className = 'suggestion-item';
+                            div.innerHTML = `<strong>${symbol}</strong> - ${stockData[symbol].name}`;
+                            div.onclick = () => {
+                                searchInput.value = `${symbol} - ${stockData[symbol].name}`;
+                                updateStockDisplay(symbol);
+                                suggestionsDiv.style.display = 'none';
+                            };
+                            suggestionsDiv.appendChild(div);
+                        });
+                        suggestionsDiv.style.display = 'block';
+                    } else {
+                        suggestionsDiv.style.display = 'none';
+                    }
+                } else {
+                    suggestionsDiv.style.display = 'none';
+                }
+            });
+            
+            // Hide suggestions when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!searchInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
+                    suggestionsDiv.style.display = 'none';
+                }
+            });
+        }
+
+        // Order type change handler
+        document.getElementById('orderType').addEventListener('change', function() {
+            const limitPriceDiv = document.getElementById('limitPriceDiv');
+            if (this.value === 'limit') {
+                limitPriceDiv.style.display = 'block';
+                document.getElementById('limitPrice').value = stockData[currentStock].price.toFixed(2);
+            } else {
+                limitPriceDiv.style.display = 'none';
+            }
+            updateOrderSummary();
+        });
+
+        // Quantity change handler
+        document.getElementById('quantity').addEventListener('input', updateOrderSummary);
+        document.getElementById('limitPrice').addEventListener('input', updateOrderSummary);
+
+        // Execute trade
+        function executeTrade(action) {
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const totalCost = parseFloat(document.getElementById('totalCost').textContent.replace('$', ''));
+            
+            if (action === 'buy') {
+                if (totalCost > cashBalance) {
+                    alert('Insufficient funds!');
+                    return;
+                }
+                cashBalance -= totalCost;
+                alert(`Successfully bought ${quantity} shares of ${currentStock} for $${totalCost.toFixed(2)}`);
+            } else {
+                cashBalance += totalCost;
+                alert(`Successfully sold ${quantity} shares of ${currentStock} for $${totalCost.toFixed(2)}`);
+            }
+            
+            document.getElementById('cashBalance').textContent = `$${cashBalance.toFixed(2)}`;
+        }
+
+        // Initialize everything
+        window.addEventListener('load', function() {
+            initChart();
+            setupSearch();
+            updateStockDisplay(currentStock);
+            
+            // Set initial search value
+            document.getElementById('stockSearch').value = `${currentStock} - ${stockData[currentStock].name}`;
+        });
+    </script>
 </body>
 </html>
+
