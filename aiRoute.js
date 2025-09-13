@@ -1,15 +1,12 @@
-// routes/ai.js
+// aiRoute.js
 const express = require('express');
 const router = express.Router();
 
-// Use global fetch on Node 18+; otherwise lazy-load node-fetch
+// Node 18+ has global fetch; otherwise lazy-load node-fetch
 const doFetch = (typeof fetch === 'function')
   ? fetch
   : (...args) => import('node-fetch').then(({ default: f }) => f(...args));
 
-/** =========================
- *  Kill switch + monthly cap
- *  ========================= */
 function currentMonthKey() {
   const d = new Date();
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
@@ -18,31 +15,44 @@ function currentMonthKey() {
 let monthKey = currentMonthKey();
 let monthlyCount = 0;
 
-// Middleware: enforce kill switch + monthly cap
+// Optional: simple IP rate limit (60/min by default)
+const RATE_WINDOW_MS = Number(process.env.AI_RATE_WINDOW_MS || 60_000);
+const RATE_MAX       = Number(process.env.AI_RATE_MAX || 60);
+const ipBucket = new Map();
+function rateLimit(req, res, next) {
+  const now = Date.now();
+  const ip = req.ip || req.connection?.remoteAddress || 'unknown';
+  let b = ipBucket.get(ip);
+  if (!b || now >= b.resetAt) { b = { count: 0, resetAt: now + RATE_WINDOW_MS }; ipBucket.set(ip, b); }
+  if (b.count >= RATE_MAX) return res.status(429).json({ error: 'Too many requests' });
+  b.count += 1; next();
+}
+
 function aiControls(req, res, next) {
-  // 1) Kill switch: set AI_ENABLED=false in .env to disable immediately
   if ((process.env.AI_ENABLED || 'true').toLowerCase() === 'false') {
     return res.status(503).json({ error: 'AI temporarily disabled' });
   }
-
-  // 2) Monthly cap: hard stop at configured limit
   const cap = Number(process.env.AI_MONTHLY_CAP || 2000);
   const mk = currentMonthKey();
-  if (mk !== monthKey) { monthKey = mk; monthlyCount = 0; } // reset on new month (UTC)
-
-  if (monthlyCount >= cap) {
-    return res.status(429).json({ error: 'Monthly AI quota reached' });
-  }
-
-  // Count *before* calling upstream to close race windows
+  if (mk !== monthKey) { monthKey = mk; monthlyCount = 0; }
+  if (monthlyCount >= cap) return res.status(429).json({ error: 'Monthly AI quota reached' });
   monthlyCount += 1;
   next();
 }
 
-/** ===============
- *  Route handler
- *  =============== */
-router.post('/ask', aiControls, async (req, res) => {
+// Health for quick verification
+router.get('/health', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({
+    ok: true,
+    enabled: (process.env.AI_ENABLED || 'true').toLowerCase() !== 'false',
+    month: monthKey,
+    used_this_month: monthlyCount
+  });
+});
+
+// Main ask endpoint
+router.post('/ask', rateLimit, aiControls, async (req, res) => {
   try {
     const question = (req.body?.question || '').trim();
     if (!question) return res.status(400).json({ error: 'Ask a real question.' });
@@ -50,13 +60,21 @@ router.post('/ask', aiControls, async (req, res) => {
     const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
     if (!OPENAI_API_KEY) return res.status(500).json({ error: 'OPENAI_API_KEY missing' });
 
-    // Keep system prompt short (counts toward input tokens)
-    const system = `You are "An Investor (AI)". Be clear and educational about stocks and options. 
+    // === caps (env + optional per-request) ===
+    const serverCap = Number(process.env.AI_MAX_OUTPUT_TOKENS || 320);     // raise your default here
+    const hardMax   = Number(process.env.AI_SERVER_HARD_MAX || serverCap); // optional extra guard
+    const reqMax    = Number(req.body?.maxTokens);
+    const MAX_OUT   = Math.min(
+      Number.isFinite(reqMax) && reqMax > 0 ? reqMax : serverCap,
+      hardMax
+    );
+    console.log('[AI] max_output_tokens =', MAX_OUT);
+
+    // Short, safe system prompt
+    const system = `You are "An Investor (AI)". Be clear and educational about stocks and options.
 Avoid financial advice; provide general information and learning guidance only.`;
 
-    // Short answers: cap output tokens
-    const MAX_OUT = Number(process.env.AI_MAX_OUTPUT_TOKENS || 120);
-
+    // Use Responses API with instructions + input
     const r = await doFetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: {
@@ -66,11 +84,9 @@ Avoid financial advice; provide general information and learning guidance only.`
       },
       body: JSON.stringify({
         model: 'gpt-4o-mini',
-        input: [
-          { role: 'system', content: system },
-          { role: 'user', content: question }
-        ],
-        max_output_tokens: MAX_OUT,     // <-- short answers
+        instructions: system,     // system message
+        input: question,          // user question
+        max_output_tokens: MAX_OUT,
         temperature: 0.3
       })
     });
