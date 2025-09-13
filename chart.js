@@ -16,6 +16,7 @@ const chartInstances = {}; // Global storage
 //    { x: 1713139200000, o: 161.57, h: 162.05, l: 157.64, c: 158.68 }
 
 function showChart(ticker, tradingData) {
+  console.log("tradingData", tradingData);
   if (!tradingData) return;
 
   const canvas = document.getElementById(`${ticker}-chart`);
@@ -90,12 +91,37 @@ function showChart(ticker, tradingData) {
         legend: { display: false },
         tooltip: { mode: "index", intersect: false },
       },
-      scales: {
-        x: {
-          type: "time",
-          time: { unit: "day" },
-          title: { display: true, text: "Date" },
+    scales: {
+      x: {
+        type: "time",
+        time: {
+          unit: "day",
+          displayFormats: { day: "MMM d" }
         },
+        bounds: "data",
+        ticks: {
+          autoSkip: false,       // let us decide which ones to show
+          maxRotation: 0,
+          callback: (value, index, ticks) => {
+            const last = ticks.length - 1;
+            if (last <= 4) {
+              // 5 or fewer ticks total — show them all
+              return new Date(value).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+            }
+            // Pick exactly 5 anchor indices: 0, 25%, 50%, 75%, last
+            const anchors = new Set([
+              0,
+              Math.round(last * 0.25),
+              Math.round(last * 0.50),
+              Math.round(last * 0.75),
+              last
+            ]);
+            return anchors.has(index)
+              ? new Date(value).toLocaleDateString(undefined, { month: "short", day: "numeric" })
+              : ""; // hide other labels
+          }
+        }
+      },
         y: {
           beginAtZero: false,
           position: "right",

@@ -48,7 +48,8 @@ app.get('/', (req, res) => {
 const stocksRouter = require('./routes/stocks');
 const usersRouter = require('./routes/users');
 const commentsRouter = require('./routes/comments');
-
+// const aiRouter = require('./routes/ai');   // NEW
+// app.use('/api/ai', aiRouter);              // NEW             
 app.use('/stocks', stocksRouter);
 app.use('/users', usersRouter);
 app.use('/comments', commentsRouter);
