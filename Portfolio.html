@@ -211,43 +211,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script>
     let portfolio;
-
-    let equity;
-    let cash = 0.0;
-    let totalPL;
-
-
     const url = "http://localhost:4000";
-
-    async function buildPortfolio(username){
-      const cash = await getUserBalance(username);
-
-      const portfolio = {
-        account: {
-          equity: 125432.18,
-          cash: cash,
-          totalPL: 13785.50
-        },
-        holdings: [
-          { ticker: 'AAPL', qty: 120, avg: 162.40, price: 170.25, dayPct: 0.0 },
-          { ticker: 'MSFT', qty: 50, avg: 384.10, price: 392.60, dayPct: 0.0 },
-          { ticker: 'NVDA', qty: 30, avg: 780.00, price: 820.40, dayPct: 0.0 },
-          { ticker: 'TSLA', qty: 10, avg: 240.00, price: 228.50, dayPct: 0.0 },
-          { ticker: 'SPY', qty: 20, avg: 510.00, price: 519.85, dayPct: 0.0 },
-        ],
-        options: [
-          { symbol: 'AAPL', contract: 'AAPL 01/17/2026 180C', qty: 1, mark: 4.20, cost: 3.50, dayPL: 45.00, totalPL: 70.00 },
-          { symbol: 'MSFT', contract: 'MSFT 12/19/2025 380P', qty: -1, mark: 6.10, cost: 7.20, dayPL: 30.00, totalPL: 110.00 }
-        ],
-        equitySeries: (function(){
-          // build a subtle 30-day curve around account equity
-          const arr = []; let base = 120000; for(let i=0;i<30;i++){ base += (Math.random()-0.45)*800; arr.push(Math.max(110000, base)); } return arr;
-        })()
-      };
-      return portfolio
-    }
-    // ===== portfolio user data =====
-    
 
     const fmt = (n, p=2) => new Intl.NumberFormat(undefined, {minimumFractionDigits: p, maximumFractionDigits: p}).format(n);
     const el = id => document.getElementById(id);
@@ -258,37 +222,58 @@
       const plTot = portfolio.account.totalPL;
       el('k_total_pl').innerHTML = `<span class="${plTot>=0?'pos':'neg'}">$${fmt(plTot)}</span>`;
       el('k_cash').textContent = '$' + fmt(portfolio.account.cash);
-      const d = portfolio.account.day;
     }
 
     // ===== Holdings Table =====
     function renderHoldings(){
       const tbody = document.querySelector('#holdingsTable tbody');
       tbody.innerHTML = '';
-      let totalMV = 0, totalDay = 0, totalPL = 0;
-      // Compute MV, day PL, total PL
+      let totalMV = 0, totalPL = 0;
+      
+      // If no holdings, show empty state
+      if (!portfolio.holdings || portfolio.holdings.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="8" style="text-align: center; color: var(--muted); padding: 20px;">No positions found</td>`;
+        tbody.appendChild(tr);
+        
+        el('t_mv').textContent = '$0.00';
+        el('t_tot').textContent = '$0.00';
+        return [];
+      }
+
+      // Process holdings
       const rows = portfolio.holdings.map(h => {
-        const mv = h.qty * h.price;
-        const cost = h.qty * h.avg;
-        const totPL = mv - cost;
-        const dayPL = mv * (h.dayPct/100);
-        totalMV += mv; totalDay += dayPL; totalPL += totPL;
-        return { ...h, mv, totPL, dayPL };
+        const mv = h.totalValue;
+        const avgCost = h.totalValue / h.shares; // Calculate avg cost from total value
+        const currentPrice = avgCost; // Using avg cost as current price for now
+        const totalCost = h.shares * avgCost;
+        const totPL = mv - totalCost; // This will be 0 since we're using same price
+        
+        totalMV += mv;
+        totalPL += totPL;
+        
+        return { 
+          ...h, 
+          mv, 
+          totPL, 
+          avgCost,
+          currentPrice,
+          name: h.ticker // Use ticker as name for now
+        };
       });
 
-      // Allocation based on MV
-      rows.forEach(r => r.alloc = r.mv / totalMV * 100);
+      // Calculate allocation percentages
+      rows.forEach(r => r.alloc = totalMV > 0 ? (r.mv / totalMV * 100) : 0);
 
-
-
+      // Render rows
       for(const r of rows){
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td><strong>${r.ticker}</strong></td>
           <td>${r.name}</td>
-          <td class="num">${fmt(r.qty,0)}</td>
-          <td class="num">$${fmt(r.avg)}</td>
-          <td class="num">$${fmt(r.price)}</td>
+          <td class="num">${fmt(r.shares, 0)}</td>
+          <td class="num">$${fmt(r.avgCost)}</td>
+          <td class="num">$${fmt(r.currentPrice)}</td>
           <td class="num">$${fmt(r.mv)}</td>
           <td class="num ${r.totPL>=0?'pos':'neg'}">$${fmt(r.totPL)}</td>
           <td class="num">${fmt(r.alloc,1)}%</td>
@@ -302,12 +287,23 @@
       return rows;
     }
 
-
     // ===== Charts =====
     function makeAllocationChart(rows){
       const ctx = document.getElementById('allocChart');
+      
+      if (!rows || rows.length === 0) {
+        // Show empty state for chart
+        const ctxContext = ctx.getContext('2d');
+        ctxContext.font = '14px Inter';
+        ctxContext.fillStyle = '#b8c7cc';
+        ctxContext.textAlign = 'center';
+        ctxContext.fillText('No positions to display', ctx.width/2, ctx.height/2);
+        return;
+      }
+
       const labels = rows.map(r => r.ticker);
       const data = rows.map(r => r.alloc);
+      
       new Chart(ctx, {
         type: 'doughnut',
         data: {
@@ -329,86 +325,47 @@
       });
     }
 
-    function makeEquityChart(){
-      const ctx = document.getElementById('equityChart');
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: Array.from({length: portfolio.equitySeries.length}, (_,i)=> i+1),
-          datasets: [{
-            data: portfolio.equitySeries,
-            borderWidth: 2,
-            pointRadius: 0,
-            tension: 0.35,
-            borderColor: 'rgba(61,168,245,.9)',
-            fill: true,
-            backgroundColor: 'rgba(61,168,245,.12)'
-          }]
-        },
-        options: {
-          scales: {
-            x: { display: false, grid: { display: false } },
-            y: { display: false, grid: { display: false } }
-          },
-          plugins: { legend: { display: false }, tooltip: { enabled: true } },
-          elements: { line: { capBezierPoints: true } }
+    function getCookie(name) {
+      const cDecoded = decodeURIComponent(document.cookie);
+      const cArray = cDecoded.split("; ");
+      let result = null;
+      cArray.forEach((element) => {
+        if (element.indexOf(name) == 0) {
+          result = element.substring(name.length + 1);
         }
       });
-    }
-
-    //  fetches the balance from db and then sets the UI
-    async function setCashBalance() {
-      console.log("setting cash balance");
-      cashBalance = await getUserBalance();
-      const balanceElement = document.getElementById("cashBalance");
-      balanceElement.textContent = `${cashBalance}`;
-      console.log(cashBalance);
-    }
-
-    function getCookie(name) {
-            const cDecoded = decodeURIComponent(document.cookie);
-            const cArray = cDecoded.split("; ");
-            let result = null;
-            cArray.forEach((element) => {
-                if (element.indexOf(name) == 0) {
-                    result = element.substring(name.length + 1);
-                }
-            });
-            return result;
+      return result;
     }
 
     async function getUserBalance() {
-            //  use cookie to get username for the call to the database to get balance
-            const username = getCookie("username");
-            console.log("username", username);
-            //  make api call here 
-            try {
-                const response = await fetch(`${url}/users/getBalance`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ username: username }),
-                    credentials: "include",
-                });
+      const username = getCookie("username");
+      console.log("username", username);
+      
+      try {
+        const response = await fetch(`${url}/users/getBalance`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ username: username }),
+          credentials: "include",
+        });
 
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-                const apiData = await response.json();
-                console.log("apiData", apiData);
-                if (apiData) {
-                    return apiData.balance;
-                }
+        const apiData = await response.json();
+        console.log("apiData", apiData);
+        return apiData?.balance || 0;
 
-            } catch (error) {
-                console.error('Error fetching user data:', error);
-                showWarningAlert("Failed to fetch user data. Please try again.");
-                return null;
-            }
+      } catch (error) {
+        console.error('Error fetching user balance:', error);
+        return 0;
+      }
     }
 
     async function getUserPositions() {
       const username = getCookie("username");
+      
       try {
         const response = await fetch(`${url}/users/getPositions`, {
           method: "POST",
@@ -419,74 +376,84 @@
 
         if (!response.ok) throw new Error("Failed to fetch positions");
         const data = await response.json();
+        console.log("getUserPositions data:", data);
         return data.positions || {};
       } catch (err) {
         console.error("Error fetching positions:", err);
         return {};
       }
     }
-    async function getTickerData(ticker) {
-      try {
-        const response = await fetch(`${url}/stocks/getStock`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ticker }),
-          credentials: "include",
-        });
 
-        if (!response.ok) throw new Error(`Failed to fetch stock info for ${ticker}`);
-        return await response.json();
-      } catch (err) {
-        console.error("Error fetching stock:", err);
-        return ;
-      }
-      
-    }
     // ===== Boot =====
     (async () => {
-      const balance = await getUserBalance();
-      const positions = await getUserPositions();
-      const tickerData = await getTickerData();
-
-    // Convert DB positions to holdings[]
-      const holdings = Object.entries(positions).map(([ticker, pos]) => {
-        const qty = pos.shares;
-        const avg = pos.totalCost / qty;
+      try {
+        const balance = await getUserBalance();
+        const positions = await getUserPositions();
         
-        // Placeholder until you fetch real prices from Polygon
-        const price = avg;  
-        const mv = qty * price;
-        return { ticker, qty, avg, price, mv, dayPct: 0.0 };
-      });
+        console.log("Fetched balance:", balance);
+        console.log("Fetched positions:", positions);
 
-      const totalHoldingsValue = holdings.reduce((sum, h) => sum + h.mv, 0);
-      const netAccountValue = (balance ?? 0) + totalHoldingsValue;
+        // Convert DB positions to holdings array
+        const holdings = Object.entries(positions).map(([ticker, pos]) => {
+          console.log(`Processing position for ${ticker}:`, pos);
+          
+          return {
+            ticker,
+            shares: pos.shares?.$numberInt ? parseInt(pos.shares.$numberInt) : pos.shares,
+            totalValue: pos.totalValue?.$numberDouble ? parseFloat(pos.totalValue.$numberDouble) : pos.totalValue,
+            contracts: pos.contracts || []
+          };
+        });
 
-      console.log("Balance: ", balance)
-      portfolio = {
-        account: {
-          equity: netAccountValue,
-          cash: balance ?? 0,
-          totalPL: netAccountValue - 10000
-        },
-        holdings,
-        options: [
-          { symbol: 'AAPL', contract: 'AAPL 01/17/2026 180C', qty: 1, mark: 4.20, cost: 3.50, dayPL: 45.00, totalPL: 70.00 },
-          { symbol: 'MSFT', contract: 'MSFT 12/19/2025 380P', qty: -1, mark: 6.10, cost: 7.20, dayPL: 30.00, totalPL: 110.00 }
-        ],
-        equitySeries: (function(){
-          const arr = []; let base = 120000;
-          for(let i=0;i<30;i++){ base += (Math.random()-0.45)*800; arr.push(Math.max(110000, base)); }
-          return arr;
-        })()
-      };
+        const totalHoldingsValue = holdings.reduce((sum, h) => sum + h.totalValue, 0);
+        const netAccountValue = balance + totalHoldingsValue;
+        const assumedInitialInvestment = 10000; // You might want to track this in your DB
 
+        console.log("Processed holdings:", holdings);
+        console.log("Total holdings value:", totalHoldingsValue);
+        console.log("Net account value:", netAccountValue);
 
-    renderKPIs();
-    const rows = renderHoldings();
-    makeAllocationChart(rows);
-    makeEquityChart();
-  })();
+        portfolio = {
+          account: {
+            equity: netAccountValue,
+            cash: balance,
+            totalPL: netAccountValue - assumedInitialInvestment
+          },
+          holdings,
+          options: [], // You can populate this from contracts if needed
+          equitySeries: (function(){
+            const arr = []; 
+            let base = netAccountValue * 0.95; // Start slightly below current value
+            for(let i=0;i<30;i++){ 
+              base += (Math.random()-0.45) * (netAccountValue * 0.01); 
+              arr.push(Math.max(base * 0.9, base)); 
+            }
+            return arr;
+          })()
+        };
+
+        console.log("Final portfolio:", portfolio);
+
+        renderKPIs();
+        const rows = renderHoldings();
+        makeAllocationChart(rows);
+
+      } catch (error) {
+        console.error("Error initializing portfolio:", error);
+        
+        // Fallback to empty state
+        portfolio = {
+          account: { equity: 0, cash: 0, totalPL: 0 },
+          holdings: [],
+          options: [],
+          equitySeries: []
+        };
+        
+        renderKPIs();
+        renderHoldings();
+        makeAllocationChart([]);
+      }
+    })();
   </script>
 </body>
 </html>
