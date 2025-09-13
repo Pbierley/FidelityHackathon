@@ -28,7 +28,7 @@ async function fetchPolygonQuote(ticker){
     const pastDate = `2025-01-01`
   //  console.log("formatted date ", formattedDate," past date ", pastDate)
   //                                                                    v this could be changed to have the time type passed in
-  const url = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${pastDate}/${formattedDate}?adjusted=true&sort=asc&limit=120&apiKey=${apiKey}`;
+  const url = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${pastDate}/${formattedDate}?adjusted=true&sort=asc&limit=200&apiKey=${apiKey}`;
   const response = await axios.get(url);
   //  console.log("Polygon response.data", response.data.results);
   return response.data.results;
