@@ -421,23 +421,7 @@
                 <!-- Options will be populated here -->
             </div>
 
-            <div class="profit-loss-calculator" id="calculator">
-                <div class="calc-header">Profit/Loss Calculator</div>
-                <div class="calc-inputs">
-                    <div class="input-group">
-                        <label>Contracts</label>
-                        <input type="number" id="contracts" value="1" min="1" onchange="calculateProfitLoss()">
-                    </div>
-                    <div class="input-group">
-                        <label>Target Stock Price</label>
-                        <input type="number" id="targetPrice" step="0.01" onchange="calculateProfitLoss()">
-                    </div>
-                </div>
-
-                <div class="scenarios" id="scenarios">
-                    <!-- Scenarios will be populated here -->
-                </div>
-            </div>
+            
         </div>
     </div>
 
@@ -639,12 +623,14 @@
         // Generate sample options data
         function generateOptionsData(stockPrice, optionType) {
             const options = [];
-            const expirations = ['2025-09-19', '2025-09-26', '2025-10-3', '2025-10-10'];
+            const expirations = ['2025-09-12', '2025-09-19', '2025-10-03', '2025-10-10'];
 
             for (let exp of expirations) {
                 const strikes = [];
+                //  generates round numbers nearest to 5 
                 const baseStrike = Math.round(stockPrice / 5) * 5;
 
+                //  generates 8 strike prices 
                 for (let i = -4; i <= 4; i++) {
                     const strike = baseStrike + (i * 5);
                     if (strike > 0) {
