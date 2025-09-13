@@ -394,6 +394,7 @@
             }
         }
 
+
         // Fetch individual stock data
         async function fetchStockData(ticker) {
             try {
@@ -776,7 +777,7 @@
                         headers: {
                             "Content-Type": "application/json",
                         },
-                        body: JSON.stringify({ username: username, ticker: ticker, amount: quantity }),
+                        body: JSON.stringify({ username: username, ticker: ticker, amount: quantity, totalCost: totalCost }),
                         credentials: "include",
                     });
 

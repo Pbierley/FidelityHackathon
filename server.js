@@ -49,6 +49,8 @@ const stocksRouter = require('./routes/stocks');
 const usersRouter = require('./routes/users');
 const commentsRouter = require('./routes/comments');
 
+const aiRouter = require('./aiRoute.js');   // or './aiRoute.js'
+app.use('/api/ai', aiRouter);          
 app.use('/stocks', stocksRouter);
 app.use('/users', usersRouter);
 app.use('/comments', commentsRouter);

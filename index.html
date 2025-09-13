@@ -226,10 +226,115 @@
   .search { flex: 1 1 320px; max-width: 480px; }
   @media (max-width: 1200px) { .auth-rail .ai-btn { padding: 8px 10px; font-size: 12px; } }
 
+  /* Featured charts layout */
+  .featured h2 { margin-top: 0; }
+  .chart-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 18px; }
+  .chart-card { grid-column: span 6; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); }
+  .chart-card h3 { margin: 0 0 8px; font-size: 16px; color: var(--muted); }
+  .chart-wrap { position: relative; height: 260px; }  /* canvas auto-fills */
+
+  @media (max-width: 900px){
+    .chart-card { grid-column: span 12; }
+  }
+
+  /* TEMP: remove left nav and let main span full width */
+  .toc { display: none !important; }
+  .layout { grid-template-columns: 1fr !important; }
+
+  /* Full-bleed helper */
+  .full-bleed {
+    width: 100vw;
+    position: relative;
+    left: 50%; right: 50%;
+    margin-left: -50vw; margin-right: -50vw;
+    padding-left: 20px; padding-right: 20px;
+  }
+  #featured-charts.full-bleed .chart-grid { max-width: min(1800px, 96vw); margin: 0 auto; }
+  #featured-charts .chart-wrap { height: 340px; } /* taller, nicer */
+  @media (max-width: 900px){ #featured-charts .chart-wrap { height: 260px; } }
+
+  /* Featured charts */
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 18px;
+}
+.stock-card {
+  grid-column: span 6;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  box-shadow: var(--shadow);
+  min-width: 0;
+}
+.stock-card h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  color: var(--muted);
+}
+.chart-wrap {
+  position: relative;
+  height: 320px;   /* canvas fills this */
+}
+.stock-note { margin-top: 8px; color: var(--muted); font-size: 12px; }
+
+@media (max-width: 900px){
+  .stock-card { grid-column: span 12; }
+  .chart-wrap { height: 260px; }
+}
+
+/* Learn Options teaser */
+.learn-head {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 12px;
+}
+.learn-head h2 { margin: 0; }
+
+.learn-grid {
+  display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px;
+}
+.learn-card {
+  grid-column: span 4;
+  display: flex; flex-direction: column; gap: 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  text-decoration: none;
+  color: var(--text);
+  box-shadow: var(--shadow);
+  transition: transform .1s ease, filter .2s ease, border-color .2s ease;
+}
+.learn-card:hover { transform: translateY(-1px); filter: brightness(1.05); border-color: rgba(0,179,179,.35); }
+
+.learn-icon {
+  width: 36px; height: 36px; display: grid; place-items: center;
+  background: #0b1117; border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.learn-title { font-weight: 700; letter-spacing: .2px; }
+.learn-desc  { color: var(--muted); margin: 0; }
+
+.learn-meta { display: flex; gap: 8px; margin-top: auto; }
+.chip {
+  font-size: 12px; padding: 6px 10px; border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  background: linear-gradient(180deg, #0b1117, #0f171f);
+}
+
+@media (max-width: 1000px) { .learn-card { grid-column: span 6; } }
+@media (max-width: 700px)  { .learn-card { grid-column: span 12; } }
+
 </style>
 
- 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Core Chart.js (UMD) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <!-- Time adapter -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <!-- Financial plugin (candlesticks) -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.2.1"></script>
 
 </head>
 <body>
@@ -248,6 +353,8 @@
       <a href="dashboard.html" class="pill requires-auth" id="linkDashboard">Trading Dashboard</a>
       <a href="OptionsCenter.html" class="pill">Options Hub</a>
       <a href="Portfolio.html" class="pill requires-auth" id="linkPortfolio">Portfolio</a>
+      <a href="AskAI.html" class="pill requires-auth">Ask An Investor</a>
+      <a href="optionsPlayground.html" class="pill requires-auth">Options Playground</a>
 
     </nav>
       <div class="right-rail">
@@ -270,13 +377,13 @@
   <div class="layout">
     <!-- Sidebar -->
    
-    <aside class="toc">
+    <!-- <aside class="toc">
       <h3>Navigation</h3>
       <div class="group">
         <a href="#markets" class="toc-link">Markets</a>
         <a href="#industries" class="toc-link">Industries</a>
       </div>
-    </aside>
+    </aside> -->
 
     <!-- Main -->
     <main>
@@ -291,30 +398,66 @@
         </div>
       </section>
 
-      <!-- Markets -->
-      <section id="markets" class="section">
-        <h2>Markets Overview</h2>
-        <div class="grid">
-          <div class="card">
-            <h3>S&amp;P 500</h3>
-            <p>Current Level: <strong>5,210.34</strong></p>
-            <span class="pill">+1.2%</span>
-            <canvas id="chart-sp500" width="200" height="60"></canvas>
-          </div>
-          <div class="card">
-            <h3>Dow Jones Industrial</h3>
-            <p>Current Level: <strong>38,750.22</strong></p>
-            <span class="pill danger">-0.4%</span>
-            <canvas id="chart-dow" width="200" height="60"></canvas>
-          </div>
-          <div class="card">
-            <h3>Nasdaq Composite</h3>
-            <p>Current Level: <strong>16,890.65</strong></p>
-            <span class="pill">+2.0%</span>
-            <canvas id="chart-nasdaq" width="200" height="60"></canvas>
-          </div>
-        </div>
+      <section class="section" id="featured">
+        <h2>Daily Featured Price Charts</h2>
+        <div class="chart-grid" id="featuredContainer"></div>
       </section>
+
+     <section class="section learn" id="learn-options">
+      <div class="learn-head">
+        <h2>Learn Options</h2>
+        <a class="pill" href="OptionsCenter.html">Explore all lessons →</a>
+      </div>
+
+      <div class="learn-grid">
+        <!-- Calls vs Puts -->
+        <a href="OptionsCenter.html#calls-puts" class="learn-card">
+          <div class="learn-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 6h16M4 12h16M4 18h10" stroke="url(#g1)" stroke-width="2" stroke-linecap="round"/>
+              <defs><linearGradient id="g1" x1="0" y1="0" x2="24" y2="24"><stop stop-color="var(--brand)"/><stop offset="1" stop-color="var(--brand-3)"/></linearGradient></defs>
+            </svg>
+          </div>
+          <div class="learn-title">Calls vs Puts</div>
+          <p class="learn-desc">Rights, obligations, and basic payoffs—when traders pick each.</p>
+          <div class="learn-meta">
+            <span class="chip">Beginner</span><span class="chip">5 min</span>
+          </div>
+        </a>
+
+        <!-- Strike & Breakeven -->
+        <a href="OptionsCenter.html#strike-breakeven" class="learn-card">
+          <div class="learn-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 20l6-6 4 4 6-10" stroke="url(#g2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <defs><linearGradient id="g2" x1="0" y1="0" x2="24" y2="24"><stop stop-color="var(--brand-2)"/><stop offset="1" stop-color="var(--brand-3)"/></linearGradient></defs>
+            </svg>
+          </div>
+          <div class="learn-title">Strike &amp; Breakeven</div>
+          <p class="learn-desc">Pick strikes with moneyness & delta; compute breakeven quickly.</p>
+          <div class="learn-meta">
+            <span class="chip">Interactive</span><span class="chip">8 min</span>
+          </div>
+        </a>
+
+        <!-- Quick Calculator -->
+        <a href="OptionsCenter.html#calculator" class="learn-card">
+          <div class="learn-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm3 5h6M9 12h6M9 15h6" stroke="url(#g3)" stroke-width="2" stroke-linecap="round"/>
+              <defs><linearGradient id="g3" x1="0" y1="0" x2="24" y2="24"><stop stop-color="var(--brand)"/><stop offset="1" stop-color="var(--brand-2)"/></linearGradient></defs>
+            </svg>
+          </div>
+          <div class="learn-title">Quick Calculator</div>
+          <p class="learn-desc">Plug strike & premium; get breakeven and max risk instantly.</p>
+          <div class="learn-meta">
+            <span class="chip">Tool</span><span class="chip">2 min</span>
+          </div>
+        </a>
+      </div>
+    </section>
+
+
 
       <!-- Top Stocks -->
       <section id="industries" class="section">
@@ -329,32 +472,23 @@
   <p class="muted">Leaders in software, hardware, and internet services.</p>
   <table>
     <thead>
-      <tr><th>Company</th><th>Price</th><th>Change</th><th>Chart</th></tr>
+      <tr><th>Company</th><th>Price</th><th>Change</th></tr>
     </thead>
     <tbody>
       <tr>
         <td>Apple</td>
         <td>$215.32</td>
         <td><span class="pill">+1.5%</span></td>
-        <td>
-          <canvas id="chart-aapl" width="100" height="40"></canvas>
-        </td>
       </tr>
       <tr>
         <td>Google</td>
         <td>$145.67</td>
         <td><span class="pill">+0.9%</span></td>
-        <td>
-          <canvas id="chart-googl" width="100" height="40"></canvas>
-        </td>
       </tr>
       <tr>
         <td>Meta</td>
         <td>$382.14</td>
         <td><span class="pill danger">-0.3%</span></td>
-        <td>
-          <canvas id="chart-meta" width="100" height="40"></canvas>
-        </td>
       </tr>
     </tbody>
   </table>
@@ -702,6 +836,26 @@ renderMiniChart("chart-ko", sampleFlat, "#3ec7a7");
     });
   })();
 </script>
-
+  <script src="../chart.js"></script>
+  <script type="module" src="./main.js"></script>
+  <script>
+  // Simple auth gate for protected links
+  document.addEventListener('DOMContentLoaded', () => {
+    const loggedIn = document.cookie.split('; ').some(c => c.startsWith('username='));
+    document.querySelectorAll('a.requires-auth').forEach(a => {
+      a.addEventListener('click', (e) => {
+        if (!loggedIn) {
+          e.preventDefault();
+          // remember where they wanted to go (optional)
+          const dest = a.getAttribute('href') || 'index.html';
+          const url = new URL('LoginAuth.html', location.href);
+          url.searchParams.set('redirect', dest);
+          window.location.href = url.toString();
+        }
+      });
+    });
+  });
+</script>
 </body>
+
 </html>

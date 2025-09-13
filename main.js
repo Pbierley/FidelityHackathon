@@ -11,17 +11,6 @@ const cancelLogin = document.getElementById("cancelLogin");
 const cancelSignup = document.getElementById("cancelSignup");
 const DashboardButton = document.getElementById("DashboardButton");
 
-LoginButton.addEventListener("click", () => { hideLogin(), hideSignup() });
-SignupButton.addEventListener("click", () => { hideLogin() });
-getPriceButton.addEventListener("click", () => { fetchStock() });
-LogoutButton.addEventListener("click", () => { logout() });
-LoginSubmit.addEventListener("click", () => { Login() });
-SignupSubmit.addEventListener("click", () => { Signup() });
-cancelLogin.addEventListener("click", () => { hideLogin() });
-cancelSignup.addEventListener("click", () => { hideSignup() });
-DashboardButton.addEventListener("click", () => {
-  window.location.href = "/dashboard";
-});
 
 function fetchAllStocks() {
   fetch(`${url}/stocks/all`, {
@@ -635,3 +624,92 @@ function getCookie(name) {
   });
   return result;
 }
+
+const FEATURED_TICKERS = ['CLSK', 'GOOG', 'META', 'UNH'];
+
+// Tiny helper: wait for window.showChart (from chart.js UMD) to exist
+function whenShowChartReady(cb, tries = 60) {
+  if (typeof window.showChart === 'function') return cb();
+  if (tries <= 0) return console.warn('showChart not found (is chart.js loaded?)');
+  setTimeout(() => whenShowChartReady(cb, tries - 1), 50);
+}
+
+function addNote(card, msg) {
+  const p = document.createElement('p');
+  p.className = 'stock-note';
+  p.textContent = msg;
+  card.appendChild(p);
+}
+
+async function fetchFixedTicker(ticker) {
+  try {
+    const res = await fetch(`${url}/stocks/${ticker}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ticker }),
+      credentials: 'include',
+    });
+    if (!res.ok) {
+      const card = ensureCardShell({ ticker, name: ticker, logo: '' });
+      addNote(card, res.status === 401 ? 'Log in to view live chart.' : 'Failed to load data.');
+      throw new Error(`HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    displayFeaturedStock(data);
+  } catch (e) {
+    console.warn('fetchFixedTicker error', ticker, e);
+  }
+}
+
+function displayFeaturedStock(stock) {
+  const grid = document.getElementById('featuredContainer');
+  if (!grid) return;
+
+  let card = document.getElementById(`card-${stock.ticker}`);
+  if (!card) {
+    card = ensureCardShell(stock);
+    grid.appendChild(card);
+  }
+
+  if (stock.tradingData && stock.tradingData.length) {
+    whenShowChartReady(() => {
+      const canvas = card.querySelector('canvas');
+      if (canvas) window.showChart(stock.ticker, stock.tradingData);
+    });
+  } else {
+    addNote(card, 'No price data available.');
+  }
+}
+
+function ensureCardShell(stock) {
+  const grid = document.getElementById('featuredContainer');
+  const card = document.createElement('div');
+  card.className = 'stock-card';
+  card.id = `card-${stock.ticker}`;
+
+  const hdr = document.createElement('div');
+  hdr.className = 'row';
+  const logoHtml = stock.logo
+    ? `<img src="${stock.logo}${VITE_POLYGON_API_KEY ? `?apiKey=${VITE_POLYGON_API_KEY}` : ''}" alt="${stock.name || stock.ticker} logo" style="height:22px;width:auto;opacity:.9;">`
+    : '';
+  hdr.innerHTML = `<div class="row" style="gap:10px;">${logoHtml}<h3 style="margin:0">${stock.name || stock.ticker} (${stock.ticker})</h3></div>`;
+  card.appendChild(hdr);
+
+  const wrap = document.createElement('div');
+  wrap.className = 'chart-wrap';
+  const canvas = document.createElement('canvas');
+  canvas.id = `${stock.ticker}-chart`;
+  wrap.appendChild(canvas);
+  card.appendChild(wrap);
+
+  if (!document.getElementById(card.id)) grid.appendChild(card);
+  return card;
+}
+
+// Mount only on pages that have the container
+function mountFeaturedCharts() {
+  if (!document.getElementById('featuredContainer')) return;
+  FEATURED_TICKERS.forEach(fetchFixedTicker);
+}
+
+document.addEventListener('DOMContentLoaded', mountFeaturedCharts);
