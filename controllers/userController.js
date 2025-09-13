@@ -219,8 +219,10 @@ const buyAsset = async (req, res) => {
     const db = await connectToDB();
     const users = db.collection("users");
 
-    const { username, ticker, amount } = req.body;
+    const { username, ticker, amount, totalCost } = req.body; 
+    // totalCost = amount * price, passed in directly from client
     const amt = parseInt(amount, 10);
+    const cost = parseFloat(totalCost);
 
     // 1. Find user
     const user = await users.findOne({ username });
@@ -228,7 +230,7 @@ const buyAsset = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // 2. Ensure positions object exists (if missing, set it once)
+    // 2. Ensure positions object exists
     if (!user.positions) {
       await users.updateOne(
         { _id: user._id },
@@ -236,29 +238,44 @@ const buyAsset = async (req, res) => {
       );
     }
 
-    // 3. Ensure ticker entry exists (if missing, set it once)
+    // 3. Ensure ticker entry exists
     await users.updateOne(
       { _id: user._id, [`positions.${ticker}`]: { $exists: false } },
-      { $set: { [`positions.${ticker}`]: { shares: 0, contracts: [] } } }
+      { 
+        $set: { 
+          [`positions.${ticker}`]: { 
+            shares: 0, 
+            totalValue: 0, 
+            contracts: [] 
+          } 
+        } 
+      }
     );
 
-    // 4. Increment shares
+    // 4. Increment shares and totalValue
     await users.updateOne(
       { _id: user._id },
-      { $inc: { [`positions.${ticker}.shares`]: amt } }
+      { 
+        $inc: { 
+          [`positions.${ticker}.shares`]: amt,
+          [`positions.${ticker}.totalValue`]: cost 
+        } 
+      }
     );
 
     // 5. Re-fetch updated user
     const updatedUser = await users.findOne({ username });
 
-    return res
-      .status(200)
-      .json({ balance: updatedUser.balance, positions: updatedUser.positions });
+    return res.status(200).json({
+      balance: updatedUser.balance,
+      positions: updatedUser.positions
+    });
   } catch (error) {
     console.error("Buy asset error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
 
 const sellAsset = async (req, res) => {
   try {
@@ -274,25 +291,37 @@ const sellAsset = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // 2. Ensure positions object exists
+    // 2. Ensure positions object + ticker exists
     if (!user.positions || !user.positions[ticker]) {
       return res.status(400).json({ error: `No shares of ${ticker} to sell.` });
     }
 
     const currentShares = user.positions[ticker].shares || 0;
+    const currentValue = user.positions[ticker].totalValue || 0;
 
-    // 3. Check if user has enough shares to sell
+    // 3. Check if user has enough shares
     if (amt > currentShares) {
       return res.status(400).json({ error: `Not enough shares to sell. You have ${currentShares}` });
     }
 
-    // 4. Decrement shares
+    // 4. Calculate average price per share
+    const avgPrice = currentShares > 0 ? currentValue / currentShares : 0;
+
+    // 5. Calculate value to subtract
+    const valueToSubtract = avgPrice * amt;
+
+    // 6. Update DB: decrement shares and adjust totalValue
     await users.updateOne(
       { _id: user._id },
-      { $inc: { [`positions.${ticker}.shares`]: -amt } }
+      {
+        $inc: {
+          [`positions.${ticker}.shares`]: -amt,
+          [`positions.${ticker}.totalValue`]: -valueToSubtract
+        }
+      }
     );
 
-    // Optional: remove ticker if shares become 0
+    // 7. Remove ticker if shares become 0
     if (currentShares - amt === 0) {
       await users.updateOne(
         { _id: user._id },
@@ -300,7 +329,7 @@ const sellAsset = async (req, res) => {
       );
     }
 
-    // 5. Re-fetch updated user
+    // 8. Re-fetch updated user
     const updatedUser = await users.findOne({ username });
 
     return res
@@ -312,6 +341,7 @@ const sellAsset = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
 const getPositions = async (req, res) => {
   try {
     const db = await connectToDB();
