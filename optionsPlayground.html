@@ -1,860 +1,763 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Options Trading Learning Playground</title>
+    <title>Stock Options Trading Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            background-color: #0d1117;
+            color: #c9d1d9;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
+        .card {
+            background-color: #161b22;
+            border: 1px solid #30363d;
         }
 
-        .header {
-            background: linear-gradient(135deg, #4CAF50, #45a049);
-            color: white;
-            padding: 30px;
-            text-align: center;
+        .table-dark {
+            --bs-table-bg: #161b22;
+            --bs-table-border-color: #30363d;
         }
 
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            font-weight: 300;
+        .btn-success {
+            background-color: #238636;
+            border-color: #238636;
         }
 
-        .header p {
-            opacity: 0.9;
-            font-size: 1.1rem;
+        .btn-danger {
+            background-color: #da3633;
+            border-color: #da3633;
         }
 
-        .search-section {
-            padding: 30px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #e9ecef;
+        .text-success {
+            color: #3fb950 !important;
         }
 
-        .search-container {
-            display: flex;
-            gap: 15px;
-            max-width: 500px;
-            margin: 0 auto;
+        .text-danger {
+            color: #f85149 !important;
         }
 
-        .search-input {
-            flex: 1;
-            padding: 15px 20px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: all 0.3s ease;
+        .atm-row {
+            background-color: #0969da;
+            background-color: rgba(9, 105, 218, 0.15);
         }
 
-        .search-input:focus {
-            outline: none;
-            border-color: #4CAF50;
-            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        .modal-content {
+            background-color: #161b22;
+            border: 1px solid #30363d;
         }
 
-        .search-btn {
-            padding: 15px 30px;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            transition: all 0.3s ease;
+        .form-control {
+            background-color: #21262d;
+            border-color: #30363d;
+            color: #c9d1d9;
         }
 
-        .search-btn:hover {
-            background: #45a049;
-            transform: translateY(-2px);
+        .form-control:focus {
+            background-color: #21262d;
+            border-color: #0969da;
+            color: #c9d1d9;
+            box-shadow: 0 0 0 0.25rem rgba(9, 105, 218, 0.25);
         }
 
-        .stock-info {
-            display: none;
-            padding: 30px;
-            border-bottom: 1px solid #e9ecef;
+        .logo-container {
+            background-color: white;
+            border-radius: 4px;
+            padding: 4px;
         }
 
-        .stock-header {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .stock-logo {
-            width: 60px;
-            height: 60px;
-            background: #f0f0f0;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            font-weight: bold;
-            color: #666;
-        }
-
-        .stock-logo img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            border-radius: 12px;
-        }
-
-        .stock-details h2 {
-            font-size: 1.8rem;
-            color: #333;
-            margin-bottom: 5px;
-        }
-
-        .stock-price {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #4CAF50;
-        }
-
-        .stock-price.negative {
-            color: #f44336;
-        }
-
-        .stock-info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .info-card {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            border: 1px solid #e9ecef;
-        }
-
-        .info-card h4 {
-            color: #666;
-            font-size: 0.9rem;
-            margin-bottom: 5px;
-        }
-
-        .info-card .value {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .options-section {
-            display: none;
-            padding: 30px;
-        }
-
-        .option-type-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-        }
-
-        .tab {
-            padding: 12px 24px;
-            border: 2px solid #ddd;
-            background: white;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 600;
-        }
-
-        .tab.active {
-            background: #4CAF50;
-            color: white;
-            border-color: #4CAF50;
-        }
-
-        .tab:hover:not(.active) {
-            background: #f0f0f0;
-        }
-
-        .options-grid {
-            display: grid;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .option-card {
-            background: white;
-            border: 2px solid #e9ecef;
-            border-radius: 15px;
-            padding: 20px;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .option-card:hover {
-            border-color: #4CAF50;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            transform: translateY(-2px);
-        }
-
-        .option-card.selected {
-            border-color: #4CAF50;
-            background: rgba(76, 175, 80, 0.05);
-        }
-
-        .option-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .strike-price {
-            font-size: 1.3rem;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .expiration {
-            color: #666;
-            font-size: 0.9rem;
-        }
-
-        .option-details {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        .detail-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .detail-label {
-            color: #666;
-        }
-
-        .detail-value {
-            font-weight: 600;
-        }
-
-        .profit-loss-calculator {
-            display: none;
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 25px;
-            margin-top: 20px;
-        }
-
-        .calc-header {
-            font-size: 1.4rem;
-            font-weight: bold;
-            margin-bottom: 20px;
-            color: #333;
-        }
-
-        .calc-inputs {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .input-group label {
-            font-weight: 600;
-            color: #555;
-        }
-
-        .input-group input {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-        }
-
-        .scenarios {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-
-        .scenario {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            border: 2px solid #e9ecef;
-        }
-
-        .scenario.profit {
-            border-color: #4CAF50;
-            background: rgba(76, 175, 80, 0.05);
-        }
-
-        .scenario.loss {
-            border-color: #f44336;
-            background: rgba(244, 67, 54, 0.05);
-        }
-
-        .scenario-title {
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #333;
-        }
-
-        .scenario-value {
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
-
-        .profit {
-            color: #4CAF50;
-        }
-
-        .loss {
-            color: #f44336;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 40px;
-            color: #666;
-        }
-
-        .error {
-            display: none;
-            background: rgba(244, 67, 54, 0.1);
-            color: #f44336;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
-            border: 1px solid rgba(244, 67, 54, 0.3);
-        }
-
-        @media (max-width: 768px) {
-            .search-container {
-                flex-direction: column;
-            }
-
-            .stock-header {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .option-type-tabs {
-                justify-content: center;
-                flex-wrap: wrap;
-            }
+        .option-btn {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Options Trading Playground</h1>
-            <p>Learn options trading with real-time data and interactive calculations</p>
-        </div>
-
-        <div class="search-section">
-            <div class="search-container">
-                <input type="text" class="search-input" placeholder="Enter stock symbol (e.g., AAPL, TSLA, ORCL)"
-                    id="stockInput">
-                <button class="search-btn" onclick="searchStock()">Search</button>
-            </div>
-        </div>
-
-        <div class="error" id="errorMessage"></div>
-        <div class="loading" id="loading">Loading stock data...</div>
-
-        <div class="stock-info" id="stockInfo">
-            <div class="stock-header">
-                <div class="stock-logo" id="stockLogo">📈</div>
-                <div class="stock-details">
-                    <h2 id="stockName">Apple Inc.</h2>
-                    <div class="stock-price" id="stockPrice">$150.25</div>
+    <div class="container-fluid py-4">
+        <!-- Stock Search -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <input type="text" id="tickerInput" class="form-control"
+                            placeholder="Enter ticker symbol (e.g., AAPL)" value="AAPL">
+                    </div>
+                    <div class="col-md-2">
+                        <button id="searchBtn" class="btn btn-primary w-100">Search</button>
+                    </div>
                 </div>
             </div>
-            <div class="stock-info-grid" id="stockInfoGrid">
-                <!-- Additional stock info will be populated here -->
+        </div>
+
+        <!-- Loading/Error States -->
+        <div id="loading" class="text-center py-5 d-none">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading stock data...</p>
+        </div>
+
+        <div id="error" class="alert alert-danger d-none"></div>
+
+        <!-- Stock Info -->
+        <div id="stockInfo" class="card mb-4 d-none">
+            <div class="card-body">
+                <div class="row align-items-center mb-3">
+                    <div class="col-auto">
+                        <div id="stockLogo" class="logo-container">
+                            <img src="" alt="Stock Logo" width="48" height="48">
+                        </div>
+                    </div>
+                    <div class="col">
+                        <h2 id="stockName" class="mb-0"></h2>
+                        <small id="stockTicker" class="text-muted"></small>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card bg-secondary bg-opacity-25">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-dollar-sign text-success me-2"></i>
+                                    <span class="small">Current Price</span>
+                                </div>
+                                <h3 id="currentPrice" class="mb-1"></h3>
+                                <div id="priceChange" class="small d-flex align-items-center">
+                                    <i class="fas fa-trending-up me-1"></i>
+                                    <span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-secondary bg-opacity-25">
+                            <div class="card-body">
+                                <span class="small text-muted">Market Cap</span>
+                                <h3 id="marketCap" class="mb-0"></h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-secondary bg-opacity-25">
+                            <div class="card-body">
+                                <span class="small text-muted">Strike Increment</span>
+                                <h3 id="strikeIncrement" class="mb-0"></h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <p id="stockDescription" class="small text-muted mb-0"></p>
+                </div>
             </div>
         </div>
 
-        <div class="options-section" id="optionsSection">
-            <div class="option-type-tabs">
-                <div class="tab active" onclick="switchOptionType('calls')">Calls</div>
-                <div class="tab" onclick="switchOptionType('puts')">Puts</div>
+        <!-- Options Chain -->
+        <div id="optionsChain" class="card d-none">
+            <div class="card-header">
+                <h3 class="mb-0">
+                    <i class="fas fa-calendar me-2"></i>
+                    Options Chain
+                </h3>
             </div>
-
-            <div class="options-grid" id="optionsGrid">
-                <!-- Options will be populated here -->
-            </div>
-
-            
+            <div id="optionsTables" class="card-body p-0"></div>
         </div>
     </div>
 
+    <!-- Buy Option Modal -->
+    <div class="modal fade" id="buyModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Buy <span id="modalOptionType"></span> Option</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="card bg-secondary bg-opacity-25 mb-3">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-6">
+                                    <small class="text-muted">Strike Price:</small>
+                                    <div id="modalStrike" class="fw-bold"></div>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Premium:</small>
+                                    <div id="modalPremium" class="fw-bold"></div>
+                                </div>
+                                <div class="col-6 mt-2">
+                                    <small class="text-muted">Expiration:</small>
+                                    <div id="modalExpiration" class="fw-bold"></div>
+                                </div>
+                                <div class="col-6 mt-2">
+                                    <small class="text-muted">Type:</small>
+                                    <div id="modalType" class="fw-bold text-capitalize"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="contractsInput" class="form-label">Number of Contracts</label>
+                        <input type="number" id="contractsInput" class="form-control" value="1" min="1">
+                    </div>
+
+                    <div class="card bg-secondary bg-opacity-25 mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted">Total Cost:</span>
+                                <span id="totalCost" class="fw-bold"></span>
+                            </div>
+                            <small id="costBreakdown" class="text-muted"></small>
+                        </div>
+                    </div>
+
+                    <div id="simulationSection">
+                        <button id="simulateBtn" class="btn btn-info w-100 mb-3">
+                            <i class="fas fa-chart-line me-2"></i>
+                            Simulate P/L at Expiration
+                        </button>
+
+                        <div id="simulationResult" class="card bg-secondary bg-opacity-25 d-none">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="fas fa-chart-line me-2"></i>
+                                    Simulation Result
+                                </h6>
+                                <div class="row small">
+                                    <div class="col-6">
+                                        <span class="text-muted">Stock Price at Expiry:</span>
+                                        <div id="finalPrice" class="fw-bold"></div>
+                                    </div>
+                                    <div class="col-6">
+                                        <span class="text-muted">Total Cost:</span>
+                                        <div id="simTotalCost" class="fw-bold"></div>
+                                    </div>
+                                    <div class="col-6 mt-2">
+                                        <span class="text-muted">Total Value:</span>
+                                        <div id="totalValue" class="fw-bold"></div>
+                                    </div>
+                                    <div class="col-6 mt-2">
+                                        <span class="text-muted">Profit/Loss:</span>
+                                        <div id="profitLoss" class="fw-bold"></div>
+                                    </div>
+                                    <div class="col-12 mt-2 pt-2 border-top">
+                                        <span class="text-muted">Return:</span>
+                                        <div id="returnPercent" class="fw-bold"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="simulationButtons" class="d-flex gap-2 mt-3 d-none">
+                            <button id="runAgainBtn" class="btn btn-secondary flex-fill">Run Again</button>
+                            <button id="placeOrderBtn" class="btn btn-success flex-fill">Place Order</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
     <script>
-        let currentStock = null;
-        let currentOptionType = 'calls';
+        // Global variables
+        let stockData = null;
         let selectedOption = null;
-        let optionsData = [];
-        let stockDataCache = {};
+        let currentModal = null;
 
-        const API_URL = "http://localhost:4000"; // Your API endpoint
+        // DOM elements
+        const elements = {
+            tickerInput: document.getElementById('tickerInput'),
+            searchBtn: document.getElementById('searchBtn'),
+            loading: document.getElementById('loading'),
+            error: document.getElementById('error'),
+            stockInfo: document.getElementById('stockInfo'),
+            optionsChain: document.getElementById('optionsChain'),
+            optionsTables: document.getElementById('optionsTables'),
+            contractsInput: document.getElementById('contractsInput')
+        };
 
-        // Function to process the JSON data from your API
-        function processStockData(apiData) {
-            console.log('Processing stock data:', apiData);
-            
-            if (!apiData || !apiData.tradingData || apiData.tradingData.length === 0) {
-                return null;
+        // Mock API URL
+        const API_URL = 'https://your-api-url.com';
+
+        // Utility functions
+        const formatCurrency = (value) => {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+            }).format(value);
+        };
+
+        const formatMarketCap = (value) => {
+            if (value >= 1e12) return `$${(value / 1e12).toFixed(2)}T`;
+            if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
+            if (value >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
+            return formatCurrency(value);
+        };
+
+        // Get next Fridays
+        const getNextFridays = (count = 4) => {
+            const fridays = [];
+            const today = new Date();
+
+            let nextFriday = new Date(today);
+            const daysUntilFriday = (5 - today.getDay() + 7) % 7;
+            if (daysUntilFriday === 0 && today.getDay() === 5) {
+                nextFriday.setDate(today.getDate() + 7);
+            } else {
+                nextFriday.setDate(today.getDate() + daysUntilFriday);
             }
 
-            // Get the latest trading data (last item in the array)
-            const latestData = apiData.tradingData[apiData.tradingData.length - 1];
-            
-            // Calculate price change from previous day if available
-            let priceChange = 0;
-            let priceChangePercent = 0;
-            if (apiData.tradingData.length > 1) {
-                const previousData = apiData.tradingData[apiData.tradingData.length - 2];
-                priceChange = latestData.c - previousData.c;
-                priceChangePercent = (priceChange / previousData.c) * 100;
+            for (let i = 0; i < count; i++) {
+                fridays.push(new Date(nextFriday));
+                nextFriday.setDate(nextFriday.getDate() + 7);
             }
+
+            return fridays;
+        };
+
+        // Determine strike price increment
+        const getStrikeIncrement = (price) => {
+            if (price < 25) return 2.5;
+            if (price <= 200) return 5;
+            return 10;
+        };
+
+        // Generate strike prices
+        const generateStrikePrices = (currentPrice, increment) => {
+            const strikes = [];
+            const numStrikes = 10;
+
+            const baseStrike = Math.round(currentPrice / increment) * increment;
+
+            for (let i = -numStrikes; i <= numStrikes; i++) {
+                const strike = baseStrike + (i * increment);
+                if (strike > 0) {
+                    strikes.push(strike);
+                }
+            }
+
+            return strikes.sort((a, b) => a - b);
+        };
+
+        // Generate mock options data
+        const generateMockOptions = (currentPrice, expirationDate, strike) => {
+            const timeToExpiry = (expirationDate - new Date()) / (1000 * 60 * 60 * 24);
+
+            // More balanced pricing for 50/50 odds
+            const moneyness = strike / currentPrice;
+            const intrinsicValue = Math.max(0, currentPrice - strike);
+
+            // Balanced time value - closer to ATM options have higher time value
+            const distanceFromATM = Math.abs(moneyness - 1);
+            const timeValueBase = (timeToExpiry / 365) * currentPrice * 0.08;
+            const timeValue = timeValueBase * Math.exp(-distanceFromATM * 3) + Math.random() * 2;
+
+            const callPrice = intrinsicValue + timeValue;
+            const putIntrinsic = Math.max(0, strike - currentPrice);
+            const putPrice = putIntrinsic + timeValue * 0.9;
 
             return {
-                symbol: apiData.ticker,
-                name: apiData.name,
-                description: apiData.description,
-                price: latestData.c, // closing price
-                priceChange: priceChange,
-                priceChangePercent: priceChangePercent,
-                volume: latestData.v,
-                high: latestData.h,
-                low: latestData.l,
-                open: latestData.o,
-                marketCap: apiData.market_cap,
-                logo: apiData.logo,
-                volumeWeighted: latestData.vw,
-                timestamp: latestData.t
+                strike: strike,
+                expiration: expirationDate,
+                call: {
+                    price: Math.max(0.05, callPrice).toFixed(2),
+                    bid: Math.max(0.01, callPrice * 0.95).toFixed(2),
+                    ask: (callPrice * 1.05).toFixed(2),
+                    volume: Math.floor(Math.random() * 1000),
+                    openInterest: Math.floor(Math.random() * 5000),
+                    impliedVolatility: (Math.random() * 0.3 + 0.25).toFixed(3)
+                },
+                put: {
+                    price: Math.max(0.05, putPrice).toFixed(2),
+                    bid: Math.max(0.01, putPrice * 0.95).toFixed(2),
+                    ask: (putPrice * 1.05).toFixed(2),
+                    volume: Math.floor(Math.random() * 800),
+                    openInterest: Math.floor(Math.random() * 4000),
+                    impliedVolatility: (Math.random() * 0.3 + 0.25).toFixed(3)
+                }
             };
-        }
+        };
 
-        async function fetchStockData(ticker) {
-            try {
-                console.log('Fetching stock data for:', ticker);
-                
-                const response = await fetch(`${API_URL}/stocks/${ticker}`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ ticker: ticker }),
-                    credentials: "include",
-                });
+        // Improved stock simulation for more balanced outcomes
+        const simulateStockMovement = (currentPrice, expirationDate, volatility = 0.25) => {
+            const daysToExpiry = Math.max(1, (expirationDate - new Date()) / (1000 * 60 * 60 * 24));
+            const annualizedTime = daysToExpiry / 365;
 
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        throw new Error("You must be logged in to search for stocks.");
-                    } else if (response.status === 404) {
-                        throw new Error(`Stock symbol "${ticker}" not found.`);
-                    } else {
-                        throw new Error("Failed to fetch stock data. Please try again.");
-                    }
-                }
+            // More balanced random walk
+            const steps = Math.max(5, Math.floor(daysToExpiry / 7)); // Weekly steps
+            let price = currentPrice;
+            const dt = annualizedTime / steps;
 
-                const apiData = await response.json();
-                console.log('Raw API data:', apiData);
+            // Very small drift for more balanced outcomes
+            const drift = (Math.random() - 0.5) * 0.02; // Random drift between -1% to +1% annually
 
-                const processedData = processStockData(apiData);
-                
-                if (processedData) {
-                    stockDataCache[ticker] = processedData;
-                    return processedData;
-                } else {
-                    throw new Error("No trading data available for this stock.");
-                }
+            for (let i = 0; i < steps; i++) {
+                // Normal distribution approximation
+                const u1 = Math.random();
+                const u2 = Math.random();
+                const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
 
-            } catch (error) {
-                console.error('Error fetching stock data:', error);
-                throw error;
-            }
-        }
-
-        async function searchStock() {
-            const ticker = document.getElementById('stockInput').value.trim().toUpperCase();
-            if (!ticker) {
-                showError("Please enter a stock symbol");
-                return;
+                const priceChange = price * (drift * dt + volatility * Math.sqrt(dt) * z);
+                price = Math.max(0.01, price + priceChange);
             }
 
-            console.log('Searching for stock:', ticker);
+            return price;
+        };
 
+        // Calculate option P/L
+        const calculateOptionPL = (option, type, finalStockPrice, contracts, premium) => {
+            const totalCost = premium * contracts * 100;
+            let intrinsicValue = 0;
+
+            if (type === 'call') {
+                intrinsicValue = Math.max(0, finalStockPrice - option.strike);
+            } else {
+                intrinsicValue = Math.max(0, option.strike - finalStockPrice);
+            }
+
+            const totalValue = intrinsicValue * contracts * 100;
+            const profitLoss = totalValue - totalCost;
+            const returnPercent = totalCost > 0 ? (profitLoss / totalCost) * 100 : 0;
+
+            return {
+                totalCost,
+                totalValue,
+                profitLoss,
+                returnPercent,
+                finalStockPrice
+            };
+        };
+
+        // Fetch stock data
+        const fetchStockData = async () => {
+            const ticker = elements.tickerInput.value.trim().toUpperCase();
+            if (!ticker) return;
+            const url = "http://localhost:4000";
             showLoading(true);
             hideError();
-            hideStockInfo();
 
             try {
-                // Check cache first
-                let stockData = stockDataCache[ticker];
-                
-                if (!stockData) {
-                    stockData = await fetchStockData(ticker);
+                // Mock data - replace with actual API call
+                // const mockResponse = {
+                //     ticker: ticker,
+                //     name: ticker === 'AAPL' ? 'Apple Inc.' : `${ticker} Corporation`,
+                //     description: `${ticker} is a leading technology company with innovative products and services.`,
+                //     logo: `https://logo.clearbit.com/${ticker.toLowerCase()}.com`,
+                //     market_cap: 3000000000000,
+                //     tradingData: [
+                //         {
+                //             t: Date.now(),
+                //             c: ticker === 'AAPL' ? 175.43 : Math.random() * 300 + 50,
+                //             h: ticker === 'AAPL' ? 177.12 : Math.random() * 300 + 50,
+                //             l: ticker === 'AAPL' ? 174.89 : Math.random() * 300 + 50,
+                //             o: ticker === 'AAPL' ? 176.20 : Math.random() * 300 + 50,
+                //             v: 50000000
+                //         }
+                //     ]
+                // };
+
+                // Uncomment for real API
+
+                try {
+                    const response = await fetch(`${url}/stocks/${ticker}`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ ticker }),
+                        credentials: "include",
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    stockData = data;
+                    console.log("Stock data:", data);
+                    displayStockData();
+                    generateOptionsChain();
+
+                } catch (error) {
+                    console.error("Error fetching stock data:", error);
                 }
 
-                if (stockData) {
-                    currentStock = stockData;
-                    displayStock(currentStock);
-                    loadOptions();
-                } else {
-                    throw new Error("Unable to load stock data");
-                }
+                console.log("Fetched stock data:", stockData);
 
-            } catch (error) {
-                console.error('Search error:', error);
-                showError(error.message);
+            } catch (err) {
+                showError(err.message);
             } finally {
                 showLoading(false);
             }
-        }
+        };
 
-        function displayStock(stock) {
-            console.log('Displaying stock:', stock);
+        // Display stock data
+        const displayStockData = () => {
+            console.log("Displaying stock data:", stockData);
+            if (!stockData || !stockData.tradingData || stockData.tradingData.length === 0) {
+                return;
+            }
 
-            // Update stock logo
-            const logoElement = document.getElementById('stockLogo');
-            if (stock.logo) {
-                logoElement.innerHTML = `<img src="${stock.logo}" alt="${stock.symbol}" onerror="this.style.display='none'; this.parentElement.textContent='📈';">`;
+            const currentPrice = stockData.tradingData[0].c;
+            const previousClose = stockData.tradingData[0].o;
+            const priceChange = currentPrice - previousClose;
+            const percentChange = (priceChange / previousClose) * 100;
+            const increment = getStrikeIncrement(currentPrice);
+
+            // Update DOM elements
+            document.getElementById('stockName').textContent = stockData.name;
+            document.getElementById('stockTicker').textContent = stockData.ticker;
+            document.getElementById('currentPrice').textContent = formatCurrency(currentPrice);
+            document.getElementById('marketCap').textContent = formatMarketCap(stockData.market_cap);
+            document.getElementById('strikeIncrement').textContent = formatCurrency(increment);
+            document.getElementById('stockDescription').textContent = stockData.description;
+
+            // Update logo
+            const logoImg = document.querySelector('#stockLogo img');
+            logoImg.src = stockData.logo;
+            logoImg.alt = `${stockData.name} logo`;
+
+            // Update price change
+            const priceChangeEl = document.getElementById('priceChange');
+            const changeSpan = priceChangeEl.querySelector('span');
+            const changeIcon = priceChangeEl.querySelector('i');
+
+            changeSpan.textContent = `${priceChange >= 0 ? '+' : ''}${formatCurrency(priceChange)} (${percentChange.toFixed(2)}%)`;
+
+            if (priceChange >= 0) {
+                priceChangeEl.className = 'small d-flex align-items-center text-success';
+                changeIcon.className = 'fas fa-trending-up me-1';
             } else {
-                logoElement.textContent = '📈';
+                priceChangeEl.className = 'small d-flex align-items-center text-danger';
+                changeIcon.className = 'fas fa-trending-down me-1';
             }
 
-            // Update basic info
-            document.getElementById('stockName').textContent = `${stock.name} (${stock.symbol})`;
-            
-            const priceElement = document.getElementById('stockPrice');
-            priceElement.textContent = `$${stock.price.toFixed(2)}`;
-            
-            // Add price change indicator
-            if (stock.priceChange !== 0) {
-                const changeText = stock.priceChange >= 0 ? '+' : '';
-                priceElement.innerHTML += ` <span style="font-size: 1rem; ${stock.priceChange >= 0 ? 'color: #4CAF50' : 'color: #f44336'};">(${changeText}$${stock.priceChange.toFixed(2)} / ${stock.priceChangePercent >= 0 ? '+' : ''}${stock.priceChangePercent.toFixed(2)}%)</span>`;
-            }
+            elements.stockInfo.classList.remove('d-none');
+        };
 
-            // Update additional info grid
-            const infoGrid = document.getElementById('stockInfoGrid');
-            infoGrid.innerHTML = `
-                <div class="info-card">
-                    <h4>Market Cap</h4>
-                    <div class="value">${formatMarketCap(stock.marketCap)}</div>
-                </div>
-                <div class="info-card">
-                    <h4>Volume</h4>
-                    <div class="value">${formatVolume(stock.volume)}</div>
-                </div>
-                <div class="info-card">
-                    <h4>Day's Range</h4>
-                    <div class="value">$${stock.low.toFixed(2)} - $${stock.high.toFixed(2)}</div>
-                </div>
-                <div class="info-card">
-                    <h4>Open</h4>
-                    <div class="value">$${stock.open.toFixed(2)}</div>
-                </div>
-            `;
+        // Generate options chain
+        const generateOptionsChain = () => {
+            if (!stockData) return;
 
-            document.getElementById('stockInfo').style.display = 'block';
-            document.getElementById('optionsSection').style.display = 'block';
-        }
+            const currentPrice = stockData.tradingData[0].c;
+            const increment = getStrikeIncrement(currentPrice);
+            const strikePrices = generateStrikePrices(currentPrice, increment);
+            const fridays = getNextFridays();
 
-        function formatMarketCap(marketCap) {
-            if (marketCap >= 1e12) {
-                return `$${(marketCap / 1e12).toFixed(2)}T`;
-            } else if (marketCap >= 1e9) {
-                return `$${(marketCap / 1e9).toFixed(2)}B`;
-            } else if (marketCap >= 1e6) {
-                return `$${(marketCap / 1e6).toFixed(2)}M`;
-            } else {
-                return `$${marketCap.toLocaleString()}`;
-            }
-        }
+            let html = '';
 
-        function formatVolume(volume) {
-            if (volume >= 1e6) {
-                return `${(volume / 1e6).toFixed(2)}M`;
-            } else if (volume >= 1e3) {
-                return `${(volume / 1e3).toFixed(2)}K`;
-            } else {
-                return volume.toLocaleString();
-            }
-        }
+            fridays.forEach((friday, fridayIndex) => {
+                const options = strikePrices.map(strike =>
+                    generateMockOptions(currentPrice, friday, strike)
+                );
 
-        // Generate sample options data
-        function generateOptionsData(stockPrice, optionType) {
-            const options = [];
-            const expirations = ['2025-09-12', '2025-09-19', '2025-10-03', '2025-10-10'];
-
-            for (let exp of expirations) {
-                const strikes = [];
-                //  generates round numbers nearest to 5 
-                const baseStrike = Math.round(stockPrice / 5) * 5;
-
-                //  generates 8 strike prices 
-                for (let i = -4; i <= 4; i++) {
-                    const strike = baseStrike + (i * 5);
-                    if (strike > 0) {
-                        const isITM = optionType === 'calls' ? strike < stockPrice : strike > stockPrice;
-                        const intrinsicValue = optionType === 'calls' ?
-                            Math.max(0, stockPrice - strike) :
-                            Math.max(0, strike - stockPrice);
-
-                        const timeValue = Math.random() * 5 + 0.5;
-                        const premium = intrinsicValue + timeValue;
-
-                        options.push({
-                            strike: strike,
-                            expiration: exp,
-                            premium: premium,
-                            bid: premium - 0.05,
-                            ask: premium + 0.05,
-                            volume: Math.floor(Math.random() * 1000) + 100,
-                            openInterest: Math.floor(Math.random() * 5000) + 500,
-                            delta: optionType === 'calls' ?
-                                (isITM ? 0.5 + Math.random() * 0.4 : Math.random() * 0.5) :
-                                (isITM ? -(0.5 + Math.random() * 0.4) : -Math.random() * 0.5),
-                            gamma: Math.random() * 0.02,
-                            theta: -(Math.random() * 0.05),
-                            vega: Math.random() * 0.3
-                        });
-                    }
-                }
-            }
-
-            return options;
-        }
-
-        function loadOptions() {
-            if (!currentStock) return;
-            optionsData = generateOptionsData(currentStock.price, currentOptionType);
-            displayOptions();
-        }
-
-        function displayOptions() {
-            const grid = document.getElementById('optionsGrid');
-            grid.innerHTML = '';
-
-            // Group by expiration
-            const byExpiration = {};
-            optionsData.forEach(option => {
-                if (!byExpiration[option.expiration]) {
-                    byExpiration[option.expiration] = [];
-                }
-                byExpiration[option.expiration].push(option);
-            });
-
-            Object.keys(byExpiration).forEach(expiration => {
-                const expDate = new Date(expiration).toLocaleDateString();
-
-                byExpiration[expiration].forEach(option => {
-                    const card = document.createElement('div');
-                    card.className = 'option-card';
-                    card.onclick = () => selectOption(option, card);
-
-                    const isITM = currentOptionType === 'calls' ?
-                        option.strike < currentStock.price :
-                        option.strike > currentStock.price;
-
-                    card.innerHTML = `
-                        <div class="option-header">
-                            <div class="strike-price">$${option.strike} ${currentOptionType === 'calls' ? 'Call' : 'Put'}</div>
-                            <div class="expiration">${expDate}</div>
+                html += `
+                    <div class="border-bottom">
+                        <div class="bg-secondary bg-opacity-25 px-3 py-2">
+                            <h5 class="mb-0">Expiration: ${friday.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                })}</h5>
                         </div>
-                        <div class="option-details">
-                            <div class="detail-item">
-                                <span class="detail-label">Premium:</span>
-                                <span class="detail-value ${isITM ? 'profit' : ''}">$${option.premium.toFixed(2)}</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Bid/Ask:</span>
-                                <span class="detail-value">$${option.bid.toFixed(2)}/$${option.ask.toFixed(2)}</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Volume:</span>
-                                <span class="detail-value">${option.volume.toLocaleString()}</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Delta:</span>
-                                <span class="detail-value">${option.delta.toFixed(3)}</span>
-                            </div>
-                        </div>
-                    `;
-
-                    grid.appendChild(card);
-                });
-            });
-        }
-
-        function selectOption(option, card) {
-            // Remove previous selection
-            document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
-            card.classList.add('selected');
-
-            selectedOption = option;
-            document.getElementById('targetPrice').value = currentStock.price;
-            document.getElementById('calculator').style.display = 'block';
-            calculateProfitLoss();
-        }
-
-        function switchOptionType(type) {
-            currentOptionType = type;
-
-            // Update tab appearance
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            event.target.classList.add('active');
-
-            if (currentStock) {
-                loadOptions();
-            }
-        }
-
-        function calculateProfitLoss() {
-            if (!selectedOption) return;
-
-            const contracts = parseInt(document.getElementById('contracts').value) || 1;
-            const targetPrice = parseFloat(document.getElementById('targetPrice').value) || currentStock.price;
-
-            const scenarios = [];
-
-            // Calculate profit/loss at different price points
-            const pricePoints = [
-                { label: 'Current Price', price: currentStock.price },
-                { label: 'Target Price', price: targetPrice },
-                { label: 'Breakeven', price: calculateBreakeven() },
-                { label: 'Max Profit', price: currentOptionType === 'calls' ? targetPrice * 1.2 : targetPrice * 0.8 }
-            ];
-
-            pricePoints.forEach(point => {
-                const profitLoss = calculateOptionProfitLoss(point.price, contracts);
-                scenarios.push({
-                    title: point.label,
-                    price: point.price,
-                    profitLoss: profitLoss,
-                    isProfit: profitLoss > 0
-                });
-            });
-
-            displayScenarios(scenarios);
-        }
-
-        function calculateOptionProfitLoss(stockPrice, contracts) {
-            if (!selectedOption) return 0;
-
-            let intrinsicValue;
-            if (currentOptionType === 'calls') {
-                intrinsicValue = Math.max(0, stockPrice - selectedOption.strike);
-            } else {
-                intrinsicValue = Math.max(0, selectedOption.strike - stockPrice);
-            }
-
-            const optionValue = intrinsicValue; // Simplified - ignoring time value at expiration
-            const costBasis = selectedOption.premium * contracts * 100; // 100 shares per contract
-            const currentValue = optionValue * contracts * 100;
-
-            return currentValue - costBasis;
-        }
-
-        function calculateBreakeven() {
-            if (!selectedOption) return currentStock.price;
-
-            if (currentOptionType === 'calls') {
-                return selectedOption.strike + selectedOption.premium;
-            } else {
-                return selectedOption.strike - selectedOption.premium;
-            }
-        }
-
-        function displayScenarios(scenarios) {
-            const container = document.getElementById('scenarios');
-            container.innerHTML = '';
-
-            scenarios.forEach(scenario => {
-                const div = document.createElement('div');
-                div.className = `scenario ${scenario.isProfit ? 'profit' : 'loss'}`;
-
-                div.innerHTML = `
-                    <div class="scenario-title">${scenario.title}</div>
-                    <div>Stock: $${scenario.price.toFixed(2)}</div>
-                    <div class="scenario-value ${scenario.isProfit ? 'profit' : 'loss'}">
-                        ${scenario.profitLoss >= 0 ? '+' : ''}$${scenario.profitLoss.toFixed(2)}
-                    </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover table-sm mb-0">
+                                <thead>
+                                    <tr>
+                                        <th colspan="5" class="text-center text-success">CALLS</th>
+                                        <th class="text-center">STRIKE</th>
+                                        <th colspan="5" class="text-center text-danger">PUTS</th>
+                                    </tr>
+                                    <tr class="table-secondary">
+                                        <th class="small">Price</th>
+                                        <th class="small">Bid/Ask</th>
+                                        <th class="small">Vol</th>
+                                        <th class="small">OI</th>
+                                        <th class="small text-center">Buy</th>
+                                        <th class="small text-center fw-bold">$</th>
+                                        <th class="small">Price</th>
+                                        <th class="small">Bid/Ask</th>
+                                        <th class="small">Vol</th>
+                                        <th class="small">OI</th>
+                                        <th class="small text-center">Buy</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
                 `;
 
-                container.appendChild(div);
+                options.forEach((option, index) => {
+                    const isATM = Math.abs(option.strike - currentPrice) < increment;
+                    const rowClass = isATM ? 'atm-row' : '';
+
+                    html += `
+                        <tr class="${rowClass}">
+                            <td class="fw-bold">$${option.call.price}</td>
+                            <td class="small">$${option.call.bid}/$${option.call.ask}</td>
+                            <td class="small">${option.call.volume}</td>
+                            <td class="small">${option.call.openInterest}</td>
+                            <td class="text-center">
+                                <button class="btn btn-success option-btn" onclick="handleBuyOption(${fridayIndex}, ${index}, 'call')">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </button>
+                            </td>
+                            <td class="text-center fw-bold">$${option.strike}</td>
+                            <td class="fw-bold">$${option.put.price}</td>
+                            <td class="small">$${option.put.bid}/$${option.put.ask}</td>
+                            <td class="small">${option.put.volume}</td>
+                            <td class="small">${option.put.openInterest}</td>
+                            <td class="text-center">
+                                <button class="btn btn-danger option-btn" onclick="handleBuyOption(${fridayIndex}, ${index}, 'put')">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
             });
-        }
 
-        function showLoading(show) {
-            document.getElementById('loading').style.display = show ? 'block' : 'none';
-        }
+            elements.optionsTables.innerHTML = html;
+            elements.optionsChain.classList.remove('d-none');
+        };
 
-        function showError(message) {
-            const errorEl = document.getElementById('errorMessage');
-            errorEl.textContent = message;
-            errorEl.style.display = 'block';
-        }
+        // Handle buy option
+        window.handleBuyOption = (fridayIndex, optionIndex, type) => {
+            const currentPrice = stockData.tradingData[0].c;
+            const increment = getStrikeIncrement(currentPrice);
+            const strikePrices = generateStrikePrices(currentPrice, increment);
+            const fridays = getNextFridays();
 
-        function hideError() {
-            document.getElementById('errorMessage').style.display = 'none';
-        }
+            const option = generateMockOptions(currentPrice, fridays[fridayIndex], strikePrices[optionIndex]);
+            selectedOption = { ...option, type };
 
-        function hideStockInfo() {
-            document.getElementById('stockInfo').style.display = 'none';
-            document.getElementById('optionsSection').style.display = 'none';
-            document.getElementById('calculator').style.display = 'none';
-        }
+            // Update modal
+            document.getElementById('modalOptionType').textContent = type.toUpperCase();
+            document.getElementById('modalStrike').textContent = `$${option.strike}`;
+            document.getElementById('modalPremium').textContent = `$${option[type].ask}`;
+            document.getElementById('modalExpiration').textContent = option.expiration.toLocaleDateString();
+            document.getElementById('modalType').textContent = type;
 
-        // Allow Enter key to search
-        document.getElementById('stockInput').addEventListener('keypress', function (e) {
+            updateCost();
+            resetSimulation();
+
+            currentModal = new bootstrap.Modal(document.getElementById('buyModal'));
+            currentModal.show();
+        };
+
+        // Update cost calculation
+        const updateCost = () => {
+            if (!selectedOption) return;
+
+            const contracts = parseInt(elements.contractsInput.value) || 1;
+            const premium = parseFloat(selectedOption[selectedOption.type].ask);
+            const totalCost = premium * contracts * 100;
+
+            document.getElementById('totalCost').textContent = formatCurrency(totalCost);
+            document.getElementById('costBreakdown').textContent =
+                `${contracts} contracts × ${formatCurrency(premium)} × 100 shares`;
+        };
+
+        // Reset simulation
+        const resetSimulation = () => {
+            document.getElementById('simulationResult').classList.add('d-none');
+            document.getElementById('simulationButtons').classList.add('d-none');
+            document.getElementById('simulateBtn').classList.remove('d-none');
+        };
+
+        // Execute simulation
+        const executeSimulation = () => {
+            if (!selectedOption || !stockData) return;
+
+            const currentPrice = stockData.tradingData[0].c;
+            const premium = parseFloat(selectedOption[selectedOption.type].ask);
+            const contracts = parseInt(elements.contractsInput.value) || 1;
+            const volatility = parseFloat(selectedOption[selectedOption.type].impliedVolatility);
+
+            const finalPrice = simulateStockMovement(currentPrice, selectedOption.expiration, volatility);
+            const pl = calculateOptionPL(selectedOption, selectedOption.type, finalPrice, contracts, premium);
+
+            // Update simulation result
+            document.getElementById('finalPrice').textContent = formatCurrency(pl.finalStockPrice);
+            document.getElementById('simTotalCost').textContent = formatCurrency(pl.totalCost);
+            document.getElementById('totalValue').textContent = formatCurrency(pl.totalValue);
+
+            const profitLossEl = document.getElementById('profitLoss');
+            const returnEl = document.getElementById('returnPercent');
+
+            profitLossEl.textContent = `${pl.profitLoss >= 0 ? '+' : ''}${formatCurrency(pl.profitLoss)}`;
+            returnEl.textContent = `${pl.returnPercent >= 0 ? '+' : ''}${pl.returnPercent.toFixed(1)}%`;
+
+            profitLossEl.className = `fw-bold ${pl.profitLoss >= 0 ? 'text-success' : 'text-danger'}`;
+            returnEl.className = `fw-bold ${pl.returnPercent >= 0 ? 'text-success' : 'text-danger'}`;
+
+            // Show results
+            document.getElementById('simulateBtn').classList.add('d-none');
+            document.getElementById('simulationResult').classList.remove('d-none');
+            document.getElementById('simulationButtons').classList.remove('d-none');
+        };
+
+        // Utility functions
+        const showLoading = (show) => {
+            if (show) {
+                elements.loading.classList.remove('d-none');
+                elements.stockInfo.classList.add('d-none');
+                elements.optionsChain.classList.add('d-none');
+            } else {
+                elements.loading.classList.add('d-none');
+            }
+        };
+
+        const showError = (message) => {
+            elements.error.textContent = message;
+            elements.error.classList.remove('d-none');
+            elements.stockInfo.classList.add('d-none');
+            elements.optionsChain.classList.add('d-none');
+        };
+
+        const hideError = () => {
+            elements.error.classList.add('d-none');
+        };
+
+        // Event listeners
+        elements.searchBtn.addEventListener('click', fetchStockData);
+
+        elements.tickerInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                searchStock();
+                fetchStockData();
             }
         });
 
-        // Initialize with ORCL (from your JSON data)
-        document.addEventListener('DOMContentLoaded', function () {
-            document.getElementById('stockInput').value = 'ORCL';
-            // Don't auto-search on load, let user click the search button
+        elements.contractsInput.addEventListener('input', updateCost);
+
+        document.getElementById('simulateBtn').addEventListener('click', executeSimulation);
+
+        document.getElementById('runAgainBtn').addEventListener('click', executeSimulation);
+
+        document.getElementById('placeOrderBtn').addEventListener('click', () => {
+            alert('Order would be placed in real implementation');
+            currentModal.hide();
+            resetSimulation();
+        });
+
+        // Initialize with default ticker
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchStockData();
         });
     </script>
 </body>
