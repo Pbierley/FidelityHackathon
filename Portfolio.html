@@ -65,7 +65,7 @@
     .kpi .pos { color: var(--good); }
     .kpi .neg { color: var(--danger); }
 
-    .alloc-card { grid-column: span 4; display: grid; grid-template-columns: 1fr; align-items: center; }
+    .alloc-card { grid-column: span 6; display: grid; grid-template-columns: 1fr; align-items: center; }
     .spark-card { grid-column: span 8; }
 
     /* Panels */
@@ -164,12 +164,6 @@
       <div class="kpi">
         <h4>Cash</h4>
         <div class="v" id="k_cash">—</div>
-        <div class="d">Buying Power: <strong id="k_bp">—</strong></div>
-      </div>
-      <div class="kpi">
-        <h4>Today's P/L</h4>
-        <div class="v" id="k_day_pl">—</div>
-        <div class="d">Realized: <span id="k_day_real">—</span> · Unrealized: <span id="k_day_unreal">—</span></div>
       </div>
       <div class="kpi alloc-card panel">
         <h3>Allocation</h3>
@@ -177,12 +171,7 @@
           <canvas id="allocChart" height="120" aria-label="Allocation Donut"></canvas>
         </div>
       </div>
-      <div class="kpi spark-card panel">
-        <h3>Equity Curve (30d)</h3>
-        <div class="body">
-          <canvas id="equityChart" height="120" aria-label="Equity Sparkline"></canvas>
-        </div>
-      </div>
+      
     </div>
 
     <!-- MAIN GRID: HOLDINGS + SIDECARD -->
@@ -199,7 +188,6 @@
                 <th class="num">Avg Cost</th>
                 <th class="num">Price</th>
                 <th class="num">Market Value</th>
-                <th class="num">Day P/L</th>
                 <th class="num">Total P/L</th>
                 <th class="num">Alloc %</th>
               </tr>
@@ -209,33 +197,11 @@
               <tr>
                 <th colspan="5" class="num">Totals</th>
                 <th class="num" id="t_mv">—</th>
-                <th class="num" id="t_day">—</th>
                 <th class="num" id="t_tot">—</th>
                 <th class="num" id="t_alloc">100%</th>
               </tr>
             </tfoot>
           </table>
-        </div>
-      </div>
-
-      <div class="panel">
-        <h3>Open Option Positions</h3>
-        <div class="body">
-          <table id="optionsTable">
-            <thead>
-              <tr>
-                <th>Symbol</th>
-                <th>Contract</th>
-                <th class="num">Qty</th>
-                <th class="num">Mark</th>
-                <th class="num">Cost</th>
-                <th class="num">Day P/L</th>
-                <th class="num">Total P/L</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-          <div class="disclaimer">Mock data for demonstration. Options P/L ignores fees and assignment.</div>
         </div>
       </div>
     </div>
@@ -244,46 +210,55 @@
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script>
-    // ===== Mock user data =====
-    const mock = {
-      account: {
-        equity: 125432.18,
-        cash: 18250.00,
-        buyingPower: 75000.00,
-        day: { pl: 1245.67, realized: 320.00, unrealized: 925.67 },
-        totalPL: 13785.50
-      },
-      holdings: [
-        { ticker: 'AAPL', name: 'Apple Inc.', qty: 120, avg: 162.40, price: 170.25, dayPct: 1.12 },
-        { ticker: 'MSFT', name: 'Microsoft Corp.', qty: 50, avg: 384.10, price: 392.60, dayPct: 0.85 },
-        { ticker: 'NVDA', name: 'NVIDIA Corp.', qty: 30, avg: 780.00, price: 820.40, dayPct: 1.95 },
-        { ticker: 'TSLA', name: 'Tesla Inc.', qty: 10, avg: 240.00, price: 228.50, dayPct: -0.70 },
-        { ticker: 'SPY',  name: 'SPDR S&P 500 ETF', qty: 20, avg: 510.00, price: 519.85, dayPct: 0.40 },
-      ],
-      options: [
-        { symbol: 'AAPL', contract: 'AAPL 01/17/2026 180C', qty: 1, mark: 4.20, cost: 3.50, dayPL: 45.00, totalPL: 70.00 },
-        { symbol: 'MSFT', contract: 'MSFT 12/19/2025 380P', qty: -1, mark: 6.10, cost: 7.20, dayPL: 30.00, totalPL: 110.00 }
-      ],
-      equitySeries: (function(){
-        // build a subtle 30-day curve around account equity
-        const arr = []; let base = 120000; for(let i=0;i<30;i++){ base += (Math.random()-0.45)*800; arr.push(Math.max(110000, base)); } return arr;
-      })()
-    };
+    let portfolio;
+
+    let equity;
+    let cash = 0.0;
+    let totalPL;
+
+
+    const url = "http://localhost:4000";
+
+    async function buildPortfolio(username){
+      const cash = await getUserBalance(username);
+
+      const portfolio = {
+        account: {
+          equity: 125432.18,
+          cash: cash,
+          totalPL: 13785.50
+        },
+        holdings: [
+          { ticker: 'AAPL', qty: 120, avg: 162.40, price: 170.25, dayPct: 0.0 },
+          { ticker: 'MSFT', qty: 50, avg: 384.10, price: 392.60, dayPct: 0.0 },
+          { ticker: 'NVDA', qty: 30, avg: 780.00, price: 820.40, dayPct: 0.0 },
+          { ticker: 'TSLA', qty: 10, avg: 240.00, price: 228.50, dayPct: 0.0 },
+          { ticker: 'SPY', qty: 20, avg: 510.00, price: 519.85, dayPct: 0.0 },
+        ],
+        options: [
+          { symbol: 'AAPL', contract: 'AAPL 01/17/2026 180C', qty: 1, mark: 4.20, cost: 3.50, dayPL: 45.00, totalPL: 70.00 },
+          { symbol: 'MSFT', contract: 'MSFT 12/19/2025 380P', qty: -1, mark: 6.10, cost: 7.20, dayPL: 30.00, totalPL: 110.00 }
+        ],
+        equitySeries: (function(){
+          // build a subtle 30-day curve around account equity
+          const arr = []; let base = 120000; for(let i=0;i<30;i++){ base += (Math.random()-0.45)*800; arr.push(Math.max(110000, base)); } return arr;
+        })()
+      };
+      return portfolio
+    }
+    // ===== portfolio user data =====
+    
 
     const fmt = (n, p=2) => new Intl.NumberFormat(undefined, {minimumFractionDigits: p, maximumFractionDigits: p}).format(n);
     const el = id => document.getElementById(id);
 
     // ===== KPIs =====
     function renderKPIs(){
-      el('k_account').textContent = '$' + fmt(mock.account.equity);
-      const plTot = mock.account.totalPL;
+      el('k_account').textContent = '$' + fmt(portfolio.account.equity);
+      const plTot = portfolio.account.totalPL;
       el('k_total_pl').innerHTML = `<span class="${plTot>=0?'pos':'neg'}">$${fmt(plTot)}</span>`;
-      el('k_cash').textContent = '$' + fmt(mock.account.cash);
-      el('k_bp').textContent = '$' + fmt(mock.account.buyingPower);
-      const d = mock.account.day;
-      el('k_day_pl').innerHTML = `<span class="${d.pl>=0?'pos':'neg'}">$${fmt(d.pl)} (${fmt(d.pl/mock.account.equity*100,2)}%)</span>`;
-      el('k_day_real').textContent = '$' + fmt(d.realized);
-      el('k_day_unreal').textContent = '$' + fmt(d.unrealized);
+      el('k_cash').textContent = '$' + fmt(portfolio.account.cash);
+      const d = portfolio.account.day;
     }
 
     // ===== Holdings Table =====
@@ -292,7 +267,7 @@
       tbody.innerHTML = '';
       let totalMV = 0, totalDay = 0, totalPL = 0;
       // Compute MV, day PL, total PL
-      const rows = mock.holdings.map(h => {
+      const rows = portfolio.holdings.map(h => {
         const mv = h.qty * h.price;
         const cost = h.qty * h.avg;
         const totPL = mv - cost;
@@ -304,6 +279,8 @@
       // Allocation based on MV
       rows.forEach(r => r.alloc = r.mv / totalMV * 100);
 
+
+
       for(const r of rows){
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -313,7 +290,6 @@
           <td class="num">$${fmt(r.avg)}</td>
           <td class="num">$${fmt(r.price)}</td>
           <td class="num">$${fmt(r.mv)}</td>
-          <td class="num ${r.dayPL>=0?'pos':'neg'}">$${fmt(r.dayPL)} (${fmt(r.dayPct,2)}%)</td>
           <td class="num ${r.totPL>=0?'pos':'neg'}">$${fmt(r.totPL)}</td>
           <td class="num">${fmt(r.alloc,1)}%</td>
         `;
@@ -321,30 +297,11 @@
       }
 
       el('t_mv').textContent = '$' + fmt(totalMV);
-      el('t_day').innerHTML = `<span class="${totalDay>=0?'pos':'neg'}">$${fmt(totalDay)}</span>`;
       el('t_tot').innerHTML = `<span class="${totalPL>=0?'pos':'neg'}">$${fmt(totalPL)}</span>`;
 
       return rows;
     }
 
-    // ===== Options Table =====
-    function renderOptions(){
-      const tbody = document.querySelector('#optionsTable tbody');
-      tbody.innerHTML = '';
-      for(const p of mock.options){
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><strong>${p.symbol}</strong></td>
-          <td>${p.contract}</td>
-          <td class="num">${p.qty}</td>
-          <td class="num">$${fmt(p.mark)}</td>
-          <td class="num">$${fmt(p.cost)}</td>
-          <td class="num ${p.dayPL>=0?'pos':'neg'}">$${fmt(p.dayPL)}</td>
-          <td class="num ${p.totalPL>=0?'pos':'neg'}">$${fmt(p.totalPL)}</td>
-        `;
-        tbody.appendChild(tr);
-      }
-    }
 
     // ===== Charts =====
     function makeAllocationChart(rows){
@@ -377,9 +334,9 @@
       new Chart(ctx, {
         type: 'line',
         data: {
-          labels: Array.from({length: mock.equitySeries.length}, (_,i)=> i+1),
+          labels: Array.from({length: portfolio.equitySeries.length}, (_,i)=> i+1),
           datasets: [{
-            data: mock.equitySeries,
+            data: portfolio.equitySeries,
             borderWidth: 2,
             pointRadius: 0,
             tension: 0.35,
@@ -399,12 +356,137 @@
       });
     }
 
+    //  fetches the balance from db and then sets the UI
+    async function setCashBalance() {
+      console.log("setting cash balance");
+      cashBalance = await getUserBalance();
+      const balanceElement = document.getElementById("cashBalance");
+      balanceElement.textContent = `${cashBalance}`;
+      console.log(cashBalance);
+    }
+
+    function getCookie(name) {
+            const cDecoded = decodeURIComponent(document.cookie);
+            const cArray = cDecoded.split("; ");
+            let result = null;
+            cArray.forEach((element) => {
+                if (element.indexOf(name) == 0) {
+                    result = element.substring(name.length + 1);
+                }
+            });
+            return result;
+    }
+
+    async function getUserBalance() {
+            //  use cookie to get username for the call to the database to get balance
+            const username = getCookie("username");
+            console.log("username", username);
+            //  make api call here 
+            try {
+                const response = await fetch(`${url}/users/getBalance`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ username: username }),
+                    credentials: "include",
+                });
+
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+                const apiData = await response.json();
+                console.log("apiData", apiData);
+                if (apiData) {
+                    return apiData.balance;
+                }
+
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+                showWarningAlert("Failed to fetch user data. Please try again.");
+                return null;
+            }
+    }
+
+    async function getUserPositions() {
+      const username = getCookie("username");
+      try {
+        const response = await fetch(`${url}/users/getPositions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username }),
+          credentials: "include",
+        });
+
+        if (!response.ok) throw new Error("Failed to fetch positions");
+        const data = await response.json();
+        return data.positions || {};
+      } catch (err) {
+        console.error("Error fetching positions:", err);
+        return {};
+      }
+    }
+    async function getTickerData(ticker) {
+      try {
+        const response = await fetch(`${url}/stocks/getStock`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ticker }),
+          credentials: "include",
+        });
+
+        if (!response.ok) throw new Error(`Failed to fetch stock info for ${ticker}`);
+        return await response.json();
+      } catch (err) {
+        console.error("Error fetching stock:", err);
+        return ;
+      }
+      
+    }
     // ===== Boot =====
+    (async () => {
+      const balance = await getUserBalance();
+      const positions = await getUserPositions();
+      const tickerData = await getTickerData();
+
+    // Convert DB positions to holdings[]
+      const holdings = Object.entries(positions).map(([ticker, pos]) => {
+        const qty = pos.shares;
+        const avg = pos.totalCost / qty;
+        
+        // Placeholder until you fetch real prices from Polygon
+        const price = avg;  
+        const mv = qty * price;
+        return { ticker, qty, avg, price, mv, dayPct: 0.0 };
+      });
+
+      const totalHoldingsValue = holdings.reduce((sum, h) => sum + h.mv, 0);
+      const netAccountValue = (balance ?? 0) + totalHoldingsValue;
+
+      console.log("Balance: ", balance)
+      portfolio = {
+        account: {
+          equity: netAccountValue,
+          cash: balance ?? 0,
+          totalPL: netAccountValue - 10000
+        },
+        holdings,
+        options: [
+          { symbol: 'AAPL', contract: 'AAPL 01/17/2026 180C', qty: 1, mark: 4.20, cost: 3.50, dayPL: 45.00, totalPL: 70.00 },
+          { symbol: 'MSFT', contract: 'MSFT 12/19/2025 380P', qty: -1, mark: 6.10, cost: 7.20, dayPL: 30.00, totalPL: 110.00 }
+        ],
+        equitySeries: (function(){
+          const arr = []; let base = 120000;
+          for(let i=0;i<30;i++){ base += (Math.random()-0.45)*800; arr.push(Math.max(110000, base)); }
+          return arr;
+        })()
+      };
+
+
     renderKPIs();
     const rows = renderHoldings();
-    renderOptions();
     makeAllocationChart(rows);
     makeEquityChart();
+  })();
   </script>
 </body>
 </html>
