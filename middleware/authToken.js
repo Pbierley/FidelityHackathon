@@ -1,8 +1,7 @@
 const jwt = require("jsonwebtoken");
-const webkey = process.env.VITE_JSON_WEB_KEY;
+const webkey = process.env.JWT_SECRET || process.env.VITE_JSON_WEB_KEY;
 
 const authToken = (req, res, next) => {
-  console.log("webkey", webkey);
   console.log("Cookies received:", req.cookies);
   const token = req.cookies.token;
   if (!token) {

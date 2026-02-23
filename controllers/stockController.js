@@ -3,8 +3,8 @@ const axios = require("axios");
 
 // Utility: Fetch stock metadata from Polygon
 async function fetchPolygonStockMeta(ticker) {
-  const apiKey = process.env.VITE_POLYGON_API_KEY;
-  const url = `https://api.polygon.io/v3/reference/tickers/${ticker}?apiKey=${apiKey}`;
+  const apiKey = process.env.POLYGON_API_KEY || process.env.VITE_POLYGON_API_KEY;
+  const url = `https://api.massive.com/v3/reference/tickers/${ticker}?apiKey=${apiKey}`;
   const response = await axios.get(url);
   const { results } = response.data;
 
@@ -19,26 +19,82 @@ async function fetchPolygonStockMeta(ticker) {
 
 
 async function fetchPolygonQuote(ticker){
-  const apiKey = process.env.VITE_POLYGON_API_KEY;
+  const apiKey = process.env.POLYGON_API_KEY || process.env.VITE_POLYGON_API_KEY; 
+    const formatDate = (d) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    };
     const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0'); // months are 0-based
-    const day = String(today.getDate()).padStart(2, '0');
-    const formattedDate = `${year}-${month}-${day}`;
-    const pastDate = `2025-01-01`
+    const sixMonthsAgo = new Date(today);
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    const formattedDate = formatDate(today); // YYYY-MM-DD
+    const pastDate = formatDate(sixMonthsAgo); // YYYY-MM-DD
+    console.log("formatted date ", formattedDate," past date ", pastDate)
   //  console.log("formatted date ", formattedDate," past date ", pastDate)
   //                                                                    v this could be changed to have the time type passed in
-  const url = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${pastDate}/${formattedDate}?adjusted=true&sort=asc&limit=200&apiKey=${apiKey}`;
+  const url = `https://api.massive.com/v2/aggs/ticker/${ticker}/range/1/day/${pastDate}/${formattedDate}?adjusted=true&sort=asc&limit=200&apiKey=${apiKey}`;
   const response = await axios.get(url);
   //  console.log("Polygon response.data", response.data.results);
   return response.data.results;
 }
+
+const getStockLogo = async (req, res) => {
+  const apiKey = process.env.POLYGON_API_KEY || process.env.VITE_POLYGON_API_KEY;
+  const ticker = (req.params.ticker || "").trim().toUpperCase();
+
+  if (!ticker) {
+    return res.status(400).json({ error: "Ticker is required." });
+  }
+  if (!apiKey) {
+    return res.status(500).json({ error: "Logo API key not configured." });
+  }
+
+  try {
+    const db = await connectToDB();
+    const stocks = db.collection("stocks");
+    let stock = await stocks.findOne({ ticker });
+
+    if (!stock) {
+      const newStock = await fetchPolygonStockMeta(ticker);
+      await stocks.updateOne(
+        { ticker },
+        { $set: newStock },
+        { upsert: true }
+      );
+      stock = newStock;
+    }
+
+    if (!stock?.logo) {
+      return res.status(404).json({ error: "Logo not found for ticker." });
+    }
+
+    const logoUrl = new URL(stock.logo);
+    logoUrl.searchParams.set("apiKey", apiKey);
+
+    const response = await axios.get(logoUrl.toString(), {
+      responseType: "arraybuffer",
+      timeout: 10000,
+    });
+
+    const contentType = response.headers["content-type"] || "image/png";
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    return res.status(200).send(Buffer.from(response.data));
+  } catch (error) {
+    const status = error.response?.status || 502;
+    console.error("Error fetching logo:", error.response?.data || error.message);
+    return res.status(status).json({ error: "Failed to fetch logo." });
+  }
+};
 
 // GET /api/stocks — return all stock entries from DB
 const getStockPrices = async (req, res) => {
   try {
     const db = await connectToDB();
     const stocks = await db.collection("stocks").find({}).toArray();
+    console.log('stocks from db ', stocks);
     res.json(stocks);
   } catch (error) {
     console.error("Error fetching stock prices:", error);
@@ -86,6 +142,7 @@ const getStock = async (req, res) => {
     try {
         //  const tradingData = await fetchAlphaVantageQuote(upperTicker);
         const tradingData = await fetchPolygonQuote(upperTicker);
+
       //  console.log("tradingData from polygon", tradingData);
       //  check to prevent null from alphaVantage
       if (tradingData !== null || tradingData == !undefined) {
@@ -107,4 +164,4 @@ const getStock = async (req, res) => {
   }
 };
 
-module.exports = { getStockPrices, getStock };
+module.exports = { getStockPrices, getStock, getStockLogo };

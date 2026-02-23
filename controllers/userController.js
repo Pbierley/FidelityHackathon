@@ -1,7 +1,6 @@
 const { connectToDB } = require("../db/mongoClient"); // or wherever your DB code is
 const jwt = require("jsonwebtoken");
-const secretKey = process.env.VITE_JSON_WEB_KEY;
-console.log('secretKey', secretKey);
+const secretKey = process.env.JWT_SECRET || process.env.VITE_JSON_WEB_KEY;
 const bcrypt = require("bcrypt");
 
 //TODO encrpyt-decrypt

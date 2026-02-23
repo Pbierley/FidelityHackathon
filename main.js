@@ -1,6 +1,5 @@
 const url = import.meta.env.VITE_BACKEND_URL;
 const frontend = import.meta.env.VITE_LOCAL_URL;
-const VITE_POLYGON_API_KEY = import.meta.env.VITE_POLYGON_API_KEY;
 const LoginButton = document.getElementById("LoginButton");
 const SignupButton = document.getElementById("SignupButton");
 const LogoutButton = document.getElementById("logoutButton");
@@ -10,6 +9,11 @@ const SignupSubmit = document.getElementById("SignupSubmit");
 const cancelLogin = document.getElementById("cancelLogin");
 const cancelSignup = document.getElementById("cancelSignup");
 const DashboardButton = document.getElementById("DashboardButton");
+
+function getLogoSrc(stock) {
+  if (!stock || !stock.ticker) return "";
+  return `${url}/stocks/logo/${encodeURIComponent(stock.ticker)}`;
+}
 
 
 function fetchAllStocks() {
@@ -82,8 +86,9 @@ function displayIndividualStock(stock) {
   };
 
   let logoHtml = "";
-  if (stock.logo) {
-    logoHtml = `<img src="${stock.logo}?apiKey=${VITE_POLYGON_API_KEY}" alt="${stock.name} logo" class="img-fluid mb-2" style="max-width: 100px;">`;
+  const logoSrc = getLogoSrc(stock);
+  if (logoSrc) {
+    logoHtml = `<img src="${logoSrc}" alt="${stock.name} logo" class="img-fluid mb-2" style="max-width: 100px;">`;
   }
 
   const titleTicker = document.createElement("h5");
@@ -312,8 +317,9 @@ function displayStocks(data) {
     cardBody.classList.add("card-body");
 
     let logoHtml = "";
-    if (stock.logo) {
-      logoHtml = `<img src="${stock.logo}?apiKey=${VITE_POLYGON_API_KEY}" alt="${stock.name} logo" class="img-fluid mb-2" style="max-width: 100px;">`;
+    const logoSrc = getLogoSrc(stock);
+    if (logoSrc) {
+      logoHtml = `<img src="${logoSrc}" alt="${stock.name} logo" class="img-fluid mb-2" style="max-width: 100px;">`;
     }
 
     const titleTicker = document.createElement("h5");
@@ -689,8 +695,9 @@ function ensureCardShell(stock) {
 
   const hdr = document.createElement('div');
   hdr.className = 'row';
-  const logoHtml = stock.logo
-    ? `<img src="${stock.logo}${VITE_POLYGON_API_KEY ? `?apiKey=${VITE_POLYGON_API_KEY}` : ''}" alt="${stock.name || stock.ticker} logo" style="height:22px;width:auto;opacity:.9;">`
+  const logoSrc = getLogoSrc(stock);
+  const logoHtml = logoSrc
+    ? `<img src="${logoSrc}" alt="${stock.name || stock.ticker} logo" style="height:22px;width:auto;opacity:.9;">`
     : '';
   hdr.innerHTML = `<div class="row" style="gap:10px;">${logoHtml}<h3 style="margin:0">${stock.name || stock.ticker} (${stock.ticker})</h3></div>`;
   card.appendChild(hdr);

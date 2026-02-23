@@ -9,13 +9,15 @@ const { MongoClient } = require('mongodb'); // optional if you use Mongo
 const app = express();
 
 // ---------- Config ----------
-const PORT = Number(process.env.VITE_PORT) || 4000;
+const PORT = Number(process.env.PORT || process.env.VITE_PORT) || 4000;
 
 // Allow multiple dev origins (Vite, Live Server) or override via env FRONTEND_ORIGIN
 const allowedOrigins = [
-  process.env.VITE_LOCAL_URL,              // e.g., http://localhost:5173
+  process.env.FRONTEND_ORIGIN,             // deployed frontend URL
+  process.env.VITE_LOCAL_URL,              // legacy dev value
   'http://localhost:5173',                  // Vite default
   'http://127.0.0.1:5501',                  // your current Live Server
+  'http://127.0.0.1:5173',                  // another common Vite port
 ].filter(Boolean);
 
 // ---------- Middleware ----------
@@ -56,7 +58,12 @@ app.use('/users', usersRouter);
 app.use('/comments', commentsRouter);
 
 // ---------- MongoDB (optional but recommended) ----------
-const uri = (process.env.VITE_MONGO_URI || '').trim(); // or hard-code for testing
+const uri = (
+  process.env.MONGODB_URI ||
+  process.env.MONGO_URI ||
+  process.env.VITE_MONGO_URI ||
+  ''
+).trim();
 let mongoClient;
 
 /**
