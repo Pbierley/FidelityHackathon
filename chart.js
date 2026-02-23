@@ -131,3 +131,5 @@ function showChart(ticker, tradingData) {
     },
   });
 }
+
+window.showChart = showChart;

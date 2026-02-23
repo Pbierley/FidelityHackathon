@@ -42,3 +42,20 @@ Use `.env.example` as the template.
   - `OPENAI_API_KEY`
 
 Do not commit `.env` to git.
+
+## GitHub Pages + Render
+
+This repo is configured for GitHub Pages at:
+`https://pbierley.github.io/FidelityHackathon/`
+
+Required GitHub repo variable:
+
+- `VITE_BACKEND_URL=https://<your-render-service>.onrender.com`
+
+Required GitHub setting:
+
+- `Settings -> Pages -> Source -> GitHub Actions`
+
+Deployment workflow file:
+
+- `.github/workflows/deploy-pages.yml`
