@@ -59,3 +59,5 @@ Required GitHub setting:
 Deployment workflow file:
 
 - `.github/workflows/deploy-pages.yml`
+
+Deployed using Render + github actions.
