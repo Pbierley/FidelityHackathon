@@ -369,18 +369,19 @@
             window.__LOCAL_BACKEND_URL ||
             (import.meta.env && import.meta.env.VITE_BACKEND_URL) ||
             '';
-    </script>
-
-    <script>
-        // API Configuration
         const isLocalDev =
             location.hostname === "localhost" || location.hostname === "127.0.0.1";
-        const url = String(
+        window.__EFFECTIVE_BACKEND_URL = String(
             (isLocalDev ? window.__LOCAL_BACKEND_URL : window.__BACKEND_URL) ||
             window.__BACKEND_URL ||
             window.__LOCAL_BACKEND_URL ||
             ''
         ).replace(/\/+$/, '');
+    </script>
+
+    <script>
+        // API Configuration
+        const url = window.__EFFECTIVE_BACKEND_URL || '';
 
         // Cache for stock data
         let allStocksCache = [];
