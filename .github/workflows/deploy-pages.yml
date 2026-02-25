@@ -34,7 +34,7 @@ jobs:
 
       - name: Validate backend env vars
         env:
-          VITE_BACKEND_URL: ${{ vars.VITE_BACKEND_URL || vars.VITE_RENDER_URL }}
+          VITE_BACKEND_URL: ${{ vars.VITE_RENDER_URL ||vars.VITE_BACKEND_URL }}
           VITE_RENDER_URL: ${{ vars.VITE_RENDER_URL || vars.VITE_BACKEND_URL }}
         run: |
           test -n "$VITE_BACKEND_URL" || (echo "Missing VITE_BACKEND_URL/VITE_RENDER_URL in Actions variables" && exit 1)
