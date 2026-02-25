@@ -209,9 +209,18 @@
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script type="module">
+    window.__BACKEND_URL =
+      window.__BACKEND_URL ||
+      (import.meta.env && import.meta.env.VITE_BACKEND_URL) ||
+      '';
+  </script>
   <script>
     let portfolio;
-    const url = "http://localhost:4000";
+    const LOCAL_BACKEND = "http://localhost:4000";
+    const isLocalDev =
+      location.hostname === "localhost" || location.hostname === "127.0.0.1";
+    const url = isLocalDev ? LOCAL_BACKEND : (window.__BACKEND_URL || LOCAL_BACKEND);
 
     const fmt = (n, p=2) => new Intl.NumberFormat(undefined, {minimumFractionDigits: p, maximumFractionDigits: p}).format(n);
     const el = id => document.getElementById(id);

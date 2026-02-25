@@ -360,10 +360,19 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script type="module">
+        window.__BACKEND_URL =
+            window.__BACKEND_URL ||
+            (import.meta.env && import.meta.env.VITE_BACKEND_URL) ||
+            '';
+    </script>
 
     <script>
         // API Configuration
-        const url = "http://localhost:4000";
+        const LOCAL_BACKEND = "http://localhost:4000";
+        const isLocalDev =
+            location.hostname === "localhost" || location.hostname === "127.0.0.1";
+        const url = isLocalDev ? LOCAL_BACKEND : (window.__BACKEND_URL || LOCAL_BACKEND);
 
         // Cache for stock data
         let allStocksCache = [];

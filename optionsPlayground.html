@@ -255,7 +255,7 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
-    <script>
+    <script type="module">
         // Global variables
         let stockData = null;
         let selectedOption = null;
@@ -273,8 +273,16 @@
             contractsInput: document.getElementById('contractsInput')
         };
 
-        // Mock API URL
-        const API_URL = 'https://your-api-url.com';
+        // Backend base URL:
+        // - Vite build: use VITE_BACKEND_URL
+        // - Runtime override: window.__BACKEND_URL
+        // - Local dev fallback: localhost
+        const LOCAL_BACKEND = 'http://localhost:4000';
+        const isLocalDev =
+            location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+        const API_URL = isLocalDev
+            ? LOCAL_BACKEND
+            : (import.meta.env?.VITE_BACKEND_URL || window.__BACKEND_URL || LOCAL_BACKEND);
 
         // Utility functions
         const formatCurrency = (value) => {
@@ -429,7 +437,6 @@
         const fetchStockData = async () => {
             const ticker = elements.tickerInput.value.trim().toUpperCase();
             if (!ticker) return;
-            const url = "http://localhost:4000";
             showLoading(true);
             hideError();
 
@@ -456,7 +463,7 @@
                 // Uncomment for real API
 
                 try {
-                    const response = await fetch(`${url}/stocks/${ticker}`, {
+                    const response = await fetch(`${API_URL}/stocks/${ticker}`, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",

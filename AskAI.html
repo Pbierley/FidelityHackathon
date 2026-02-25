@@ -46,7 +46,7 @@
     <div class="muted">Disclaimer: Educational content only. Not financial advice.</div>
   </div>
 
-<script>
+<script type="module">
 (function () {
   // --- 1) Require login ---
   const loggedIn = document.cookie.split('; ').some(function(c){ return c.indexOf('username=') === 0; });
@@ -59,9 +59,10 @@
 
   // --- 2) Decide API base: proxy (/api) or direct (:4000) ---
   var DEFAULT_BACKEND = 'http://localhost:4000';
-  var devPorts = new Set(['5173','5501']);
-  var useDirectBackend = devPorts.has(location.port);
-  var BACKEND = window.__BACKEND_URL || (useDirectBackend ? DEFAULT_BACKEND : '');
+  var isLocalDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  var BACKEND = isLocalDev
+    ? DEFAULT_BACKEND
+    : ((import.meta.env && import.meta.env.VITE_BACKEND_URL) || window.__BACKEND_URL || DEFAULT_BACKEND);
   var API_BASE = BACKEND ? (BACKEND + '/api/ai') : '/api/ai';
 
   // --- 3) Format AI response with proper line breaks and HTML ---
