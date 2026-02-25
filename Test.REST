@@ -1,12 +1,16 @@
 @env=dev
-POST http://localhost:4000/users/signup
+@backendUrl = {{$dotenv VITE_BACKEND_URL}}
+@alphaVantageApiKey = {{$dotenv ALPHAVANTAGE_API_KEY}}
+@polygonApiKey = {{$dotenv VITE_POLYGON_API_KEY}}
+
+POST {{backendUrl}}/users/signup
 Content-Type: application/json
 
 {
     "email":"walterWhite@gmail.com","password":"crystalBlue123"
 }
 ###
-GET http://localhost:4000/stocks/AAPL
+GET {{backendUrl}}/stocks/AAPL
 Content-Type: application/json
 Authorization: Bearer 
 
@@ -14,28 +18,28 @@ Authorization: Bearer
     "ticker":"AAPL"
 }
 ###
-GET https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=AAPL&apikey=681d260bf43948c09aa6284b`;
+GET https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=AAPL&apikey={{alphaVantageApiKey}}
 Content-Type: application/json
 
 ### GET stock
-GET http://localhost:4000/stocks/AAPL
+GET {{backendUrl}}/stocks/AAPL
 Content-Type: application/json
 
 {
     "ticker":"AAPL"
 }
 ### GET all stock
-GET http://localhost:4000/stocks/
+GET {{backendUrl}}/stocks/
 Content-Type: application/json
 
 
 ### GET stock
-GET https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=TSLA&apikey=SMPICQ6GQ5HO959X
+GET https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=TSLA&apikey={{alphaVantageApiKey}}
 Content-Type: application/json
 
 
 ### GETS existing user
-POST http://localhost:4000/users/login
+POST {{backendUrl}}/users/login
 Content-Type: application/json
 
 {
@@ -43,14 +47,14 @@ Content-Type: application/json
 }
 
 ### create Comment
-POST http://localhost:4000/comments/create
+POST {{backendUrl}}/comments/create
 Content-Type: application/json
 
 {
     "ticker":"AAPL", "username":"1", "comment":"example comment"
 }
 ### get Comments
-POST http://localhost:4000/users/getPositions
+POST {{backendUrl}}/users/getPositions
 Content-Type: application/json
 
 {
@@ -59,9 +63,9 @@ Content-Type: application/json
 
 
 ### GET
-GET GET https://api.massive.com/v2/aggs/ticker/MSFT/range/1/day/2023-01-09/2023-02-10?adjusted=true&sort=asc&limit=120&apiKey=
+GET https://api.massive.com/v2/aggs/ticker/MSFT/range/1/day/2023-01-09/2023-02-10?adjusted=true&sort=asc&limit=120&apiKey={{polygonApiKey}}
 Content-Type: application/json
 
 ### GET
-GET https://api.massive.com/v3/reference/options/contracts?underlying_ticker=AAPL&limit=50&apiKey=
+GET https://api.massive.com/v3/reference/options/contracts?underlying_ticker=AAPL&limit=50&apiKey={{polygonApiKey}}
 Content-Type: application/json
