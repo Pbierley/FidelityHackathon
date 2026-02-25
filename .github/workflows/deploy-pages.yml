@@ -17,6 +17,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,10 +32,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate backend env vars
+        env:
+          VITE_BACKEND_URL: ${{ vars.VITE_BACKEND_URL || vars.VITE_RENDER_URL }}
+          VITE_RENDER_URL: ${{ vars.VITE_RENDER_URL || vars.VITE_BACKEND_URL }}
+        run: |
+          test -n "$VITE_BACKEND_URL" || (echo "Missing VITE_BACKEND_URL/VITE_RENDER_URL in Actions variables" && exit 1)
+          test -n "$VITE_RENDER_URL" || (echo "Missing VITE_RENDER_URL/VITE_BACKEND_URL in Actions variables" && exit 1)
+          echo "Using backend URL: $VITE_RENDER_URL"
+
       - name: Build frontend
         run: npm run build
         env:
-          VITE_BACKEND_URL: ${{ vars.VITE_BACKEND_URL }}
+          VITE_BACKEND_URL: ${{ vars.VITE_BACKEND_URL || vars.VITE_RENDER_URL }}
+          VITE_RENDER_URL: ${{ vars.VITE_RENDER_URL || vars.VITE_BACKEND_URL }}
           VITE_LOCAL_URL: https://pbierley.github.io/FidelityHackathon/
 
       - name: Upload Pages artifact
