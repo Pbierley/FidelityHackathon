@@ -446,26 +446,6 @@
             hideError();
 
             try {
-                // Mock data - replace with actual API call
-                // const mockResponse = {
-                //     ticker: ticker,
-                //     name: ticker === 'AAPL' ? 'Apple Inc.' : `${ticker} Corporation`,
-                //     description: `${ticker} is a leading technology company with innovative products and services.`,
-                //     logo: `https://logo.clearbit.com/${ticker.toLowerCase()}.com`,
-                //     market_cap: 3000000000000,
-                //     tradingData: [
-                //         {
-                //             t: Date.now(),
-                //             c: ticker === 'AAPL' ? 175.43 : Math.random() * 300 + 50,
-                //             h: ticker === 'AAPL' ? 177.12 : Math.random() * 300 + 50,
-                //             l: ticker === 'AAPL' ? 174.89 : Math.random() * 300 + 50,
-                //             o: ticker === 'AAPL' ? 176.20 : Math.random() * 300 + 50,
-                //             v: 50000000
-                //         }
-                //     ]
-                // };
-
-                // Uncomment for real API
 
                 try {
                     const response = await fetch(`${API_URL}/stocks/${ticker}`, {
