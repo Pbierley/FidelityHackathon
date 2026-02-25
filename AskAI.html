@@ -61,9 +61,12 @@
   var isLocalDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
   var envLocalBackend = (import.meta.env && import.meta.env.VITE_BACKEND_URL) || window.__BACKEND_URL || '';
   var envRemoteBackend = (import.meta.env && (import.meta.env.VITE_RENDER_URL || import.meta.env.VITE_BACKEND_URL)) || window.__BACKEND_URL || '';
-  var BACKEND = isLocalDev
-    ? envLocalBackend
-    : envRemoteBackend;
+  var BACKEND = String(
+    (isLocalDev ? envLocalBackend : envRemoteBackend) ||
+    envRemoteBackend ||
+    envLocalBackend ||
+    ''
+  ).replace(/\/+$/, '');
   var API_BASE = BACKEND ? (BACKEND + '/api/ai') : '/api/ai';
 
   // --- 3) Format AI response with proper line breaks and HTML ---

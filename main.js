@@ -6,7 +6,12 @@ const envRemoteBackend =
   import.meta.env.VITE_BACKEND_URL ||
   window.__BACKEND_URL ||
   "";
-const url = isLocalDev ? envLocalBackend : envRemoteBackend;
+const url = String(
+  (isLocalDev ? envLocalBackend : envRemoteBackend) ||
+  envRemoteBackend ||
+  envLocalBackend ||
+  ""
+).replace(/\/+$/, "");
 const frontend = import.meta.env.VITE_LOCAL_URL;
 const LoginButton = document.getElementById("LoginButton");
 const SignupButton = document.getElementById("SignupButton");

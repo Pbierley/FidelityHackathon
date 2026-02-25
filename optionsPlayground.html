@@ -282,9 +282,12 @@
         const envLocalBackend = import.meta.env?.VITE_BACKEND_URL || window.__BACKEND_URL || '';
         const envRemoteBackend =
             import.meta.env?.VITE_RENDER_URL || import.meta.env?.VITE_BACKEND_URL || window.__BACKEND_URL || '';
-        const API_URL = isLocalDev
-            ? envLocalBackend
-            : envRemoteBackend;
+        const API_URL = String(
+            (isLocalDev ? envLocalBackend : envRemoteBackend) ||
+            envRemoteBackend ||
+            envLocalBackend ||
+            ''
+        ).replace(/\/+$/, '');
 
         // Utility functions
         const formatCurrency = (value) => {

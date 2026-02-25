@@ -223,7 +223,12 @@
     let portfolio;
     const isLocalDev =
       location.hostname === "localhost" || location.hostname === "127.0.0.1";
-    const url = isLocalDev ? window.__LOCAL_BACKEND_URL : window.__BACKEND_URL;
+    const url = String(
+      (isLocalDev ? window.__LOCAL_BACKEND_URL : window.__BACKEND_URL) ||
+      window.__BACKEND_URL ||
+      window.__LOCAL_BACKEND_URL ||
+      ''
+    ).replace(/\/+$/, '');
 
     const fmt = (n, p=2) => new Intl.NumberFormat(undefined, {minimumFractionDigits: p, maximumFractionDigits: p}).format(n);
     const el = id => document.getElementById(id);
