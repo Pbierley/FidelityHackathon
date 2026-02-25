@@ -282,7 +282,7 @@
             location.hostname === 'localhost' || location.hostname === '127.0.0.1';
         const API_URL = isLocalDev
             ? LOCAL_BACKEND
-            : (import.meta.env?.VITE_BACKEND_URL || window.__BACKEND_URL || LOCAL_BACKEND);
+            : (import.meta.env?.VITE_RENDER_URL || import.meta.env?.VITE_BACKEND_URL || window.__BACKEND_URL || LOCAL_BACKEND);
 
         // Utility functions
         const formatCurrency = (value) => {

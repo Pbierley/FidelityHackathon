@@ -363,7 +363,7 @@
     <script type="module">
         window.__BACKEND_URL =
             window.__BACKEND_URL ||
-            (import.meta.env && import.meta.env.VITE_BACKEND_URL) ||
+            (import.meta.env && (import.meta.env.VITE_RENDER_URL || import.meta.env.VITE_BACKEND_URL)) ||
             '';
     </script>
 
