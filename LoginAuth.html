@@ -186,11 +186,15 @@
   <!-- Auth controller: handles login/signup submit, success redirect, UI state -->
 <script type="module">
   // --- Config (safe fallbacks) ---
-  const LOCAL_BACKEND = 'http://localhost:4000';
   const isLocalDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  const envLocalBackend = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_BACKEND_URL) || window.__BACKEND_URL || '';
+  const envRemoteBackend =
+    (typeof import.meta !== 'undefined' && import.meta.env && (import.meta.env.VITE_RENDER_URL || import.meta.env.VITE_BACKEND_URL)) ||
+    window.__BACKEND_URL ||
+    '';
   const BACKEND = isLocalDev
-    ? LOCAL_BACKEND
-    : ((typeof import.meta !== 'undefined' && import.meta.env && (import.meta.env.VITE_RENDER_URL || import.meta.env.VITE_BACKEND_URL)) || window.__BACKEND_URL || LOCAL_BACKEND);
+    ? envLocalBackend
+    : envRemoteBackend;
   const FRONTEND = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_LOCAL_URL) || window.__FRONTEND_URL || '/';
 
   // --- Elements ---

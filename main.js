@@ -1,8 +1,12 @@
-const LOCAL_BACKEND = "http://localhost:4000";
 const isLocalDev =
   location.hostname === "localhost" || location.hostname === "127.0.0.1";
-const envBackend = import.meta.env.VITE_RENDER_URL || import.meta.env.VITE_BACKEND_URL || "";
-const url = isLocalDev ? LOCAL_BACKEND : (envBackend || LOCAL_BACKEND);
+const envLocalBackend = import.meta.env.VITE_BACKEND_URL || window.__BACKEND_URL || "";
+const envRemoteBackend =
+  import.meta.env.VITE_RENDER_URL ||
+  import.meta.env.VITE_BACKEND_URL ||
+  window.__BACKEND_URL ||
+  "";
+const url = isLocalDev ? envLocalBackend : envRemoteBackend;
 const frontend = import.meta.env.VITE_LOCAL_URL;
 const LoginButton = document.getElementById("LoginButton");
 const SignupButton = document.getElementById("SignupButton");

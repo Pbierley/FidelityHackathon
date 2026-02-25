@@ -365,14 +365,17 @@
             window.__BACKEND_URL ||
             (import.meta.env && (import.meta.env.VITE_RENDER_URL || import.meta.env.VITE_BACKEND_URL)) ||
             '';
+        window.__LOCAL_BACKEND_URL =
+            window.__LOCAL_BACKEND_URL ||
+            (import.meta.env && import.meta.env.VITE_BACKEND_URL) ||
+            '';
     </script>
 
     <script>
         // API Configuration
-        const LOCAL_BACKEND = "http://localhost:4000";
         const isLocalDev =
             location.hostname === "localhost" || location.hostname === "127.0.0.1";
-        const url = isLocalDev ? LOCAL_BACKEND : (window.__BACKEND_URL || LOCAL_BACKEND);
+        const url = isLocalDev ? window.__LOCAL_BACKEND_URL : window.__BACKEND_URL;
 
         // Cache for stock data
         let allStocksCache = [];
