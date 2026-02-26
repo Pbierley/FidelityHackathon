@@ -7,6 +7,8 @@ const { authToken } = require("../middleware/authToken");
 const { getStockPrices, getStock, getStockLogo } = require("../controllers/stockController");
 
 router.get("/all", authToken, getStockPrices);
+router.get("/public/all", getStockPrices);
+router.get("/public/:ticker", getStock);
 router.get("/logo/:ticker", getStockLogo);
 router.post("/:ticker", authToken, getStock);
 

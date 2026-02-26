@@ -104,7 +104,9 @@ const getStockPrices = async (req, res) => {
 
 // POST /api/stocks — upsert a stock entry
 const getStock = async (req, res) => {
-  const { ticker } = req.body;
+  const bodyTicker = typeof req.body?.ticker === "string" ? req.body.ticker : "";
+  const paramTicker = typeof req.params?.ticker === "string" ? req.params.ticker : "";
+  const ticker = bodyTicker || paramTicker;
 
   if (!ticker) {
     return res.status(400).json({ error: "Ticker is required." });
