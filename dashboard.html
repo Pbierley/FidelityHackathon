@@ -364,6 +364,7 @@
         const isLocalDev =
             location.hostname === 'localhost' || location.hostname === '127.0.0.1';
         const envLocalBackend = import.meta.env?.VITE_BACKEND_URL || window.__BACKEND_URL || '';
+
         const envRemoteBackend =
             import.meta.env?.VITE_RENDER_URL || import.meta.env?.VITE_BACKEND_URL || window.__BACKEND_URL || '';
         const API_URL = String(
@@ -372,11 +373,9 @@
             envLocalBackend ||
             ''
         ).replace(/\/+$/, '');
-    </script>
-
-    <script>
+        window.API_URL = API_URL;
         // API Configuration
-        const url = API_URL ;
+        const url = window.API_URL || window.__BACKEND_URL || '';
 
         // Cache for stock data
         let allStocksCache = [];
